@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusGrid - 柔性九宮格工作站</title>
+    <style>
+        /* --- 1. 基礎設定與莫蘭迪色系 --- */
+        :root {
+            --bg-color: #F7F9F9; /* 雲朵白背景 */
+            --sidebar-bg: #FFFFFF;
+            --text-primary: #4A4A4A; /* 深灰文字 */
+            --text-secondary: #888888;
+            
+            /* 九宮格顏色 */
+            --cell-center: #E8D5B5; /* 暖沙金 (核心) */
+            --cell-card: #FFFFFF;   /* 一般卡片白 */
+            --cell-hover: #F0F4F8;  
+            --accent-blue: #D4E0E8; /* 霧霾藍 */
+            --accent-purple: #E6E6FA; /* 淡薰紫 */
+            --btn-primary: #8CA6B3; /* 莫蘭迪藍按鈕 */
+            --btn-hover: #7590A0;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- 2. 側邊欄樣式 --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid #E0E0E0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.02);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--btn-primary);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .project-list {
+            list-style: none;
+            padding: 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .project-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .project-item:hover {
+            background-color: var(--bg-color);
+        }
+
+        .project-item.active {
+            background-color: var(--accent-blue);
+            color: #334E68;
+        }
+
+        .add-btn {
+            margin-top: 10px;
+            padding: 12px;
+            background-color: var(--bg-color);
+            border: 2px dashed #D0D0D0;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-align: center;
+            transition: 0.2s;
+        }
+        .add-btn:hover {
+            border-color: var(--btn-primary);
+            color: var(--btn-primary);
+        }
+
+        /* --- 3. 主工作區樣式 --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header h2 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: #333;
+        }
+
+        .header .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        /* --- 4. 九宮格核心樣式 --- */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, minmax(180px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            height: 100%; 
+            padding-bottom: 20px;
+        }
+
+        .grid-cell {
+            background-color: var(--cell-card);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+            position: relative;
+            border: 1px solid transparent;
+        }
+
+        .grid-cell:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+        }
+
+        /* 中心格特殊樣式 */
+        .grid-cell.center-cell {
+            background-color: var(--cell-center);
+            border: 2px solid #D8C5A5;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* 呼吸燈動畫 */
+        @keyframes breathe {
+            0% { box-shadow: 0 0 0 0 rgba(232, 213, 181, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(232, 213, 181, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(232, 213, 181, 0); }
+        }
+
+        .grid-cell.center-cell {
+            animation: breathe 3s infinite;
+        }
+
+        .cell-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2D3748;
+            border-bottom: 2px solid var(--accent-purple);
+            padding-bottom: 5px;
+            display: inline-block;
+        }
+
+        .center-cell .cell-title {
+            font-size: 1.5rem;
+            border-bottom: none;
+            margin-bottom: 5px;
+        }
+
+        .cell-content {
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.6;
+            white-space: pre-wrap; /* 保留換行 */
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 進度條小圓點 */
+        .status-dot {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #E0E0E0; /* 預設 */
+        }
+        .status-dot.active { background-color: #F6AD55; } /* 進行中 (橘) */
+        .status-dot.done { background-color: #68D391; }   /* 完成 (綠) */
+
+        /* --- 5. 編輯彈出視窗 (Modal) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3);
+            display: none; /* 預設隱藏 */
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal {
+            background: white;
+            width: 500px;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal h3 { margin-top: 0; color: var(--btn-primary); }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem;}
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+        }
+        .form-group textarea { height: 120px; resize: none; }
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: var(--btn-primary);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-cancel { background-color: #f0f0f0; color: #666; }
+        .btn-save { background-color: var(--btn-primary); color: white; }
+        .btn-save:hover { background-color: var(--btn-hover); }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">
+            <span>💠 FocusGrid</span>
+        </div>
+        <ul class="project-list" id="projectList">
+            </ul>
+        <div class="add-btn" onclick="addNewProject()">+ 新增主題畫布</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h2 id="currentTitle">載入中...</h2>
+                <div class="subtitle" id="currentDesc">點擊下方格子即可編輯內容</div>
+            </div>
+            </div>
+
+        <div class="grid-container" id="gridContainer">
+            </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h3 id="modalTitle">編輯格子</h3>
+            <div class="form-group">
+                <label>標題</label>
+                <input type="text" id="editInputTitle" placeholder="輸入主題...">
+            </div>
+            <div class="form-group">
+                <label>詳細內容 / 待辦事項</label>
+                <textarea id="editInputContent" placeholder="輸入細節..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>狀態標記</label>
+                <select id="editStatus" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                    <option value="none">⚪ 待辦 (灰色)</option>
+                    <option value="active">🟠 進行中 (橘色)</option>
+                    <option value="done">🟢 已完成 (綠色)</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+                <button class="btn btn-save" onclick="saveCell()">儲存變更</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. 初始化資料 (模擬從您的 CSV 解析後的結果) ---
+        // 九宮格索引: 0=左上, 1=上, 2=右上, 3=左, 4=中, 5=右, 6=左下, 7=下, 8=右下
+        
+        const defaultData = [
+            {
+                id: 'p1',
+                name: '霓可 (Nicole)',
+                grids: [
+                    { title: 'AI 應用', content: 'MOMO提交表\n調庫存', status: 'active' }, // 0
+                    { title: '蝦皮/官網', content: '蝦皮行銷設定\n官網設定\n上架秋衣', status: 'active' }, // 1
+                    { title: '推廣業務', content: '服飾店推廣\n伊甸基金會', status: 'none' }, // 2
+                    { title: '社群運營', content: 'PO文思考\n品牌導向\n趣味導向', status: 'none' }, // 3
+                    { title: '網紅團購運營', content: '品牌核心\n雙11設定\n2025規劃', status: 'active' }, // 4 (Center)
+                    { title: '精油產品', content: '找秋妝新品團購\n給紫晴', status: 'none' }, // 5
+                    { title: '顧客活動', content: '普發金做BN/宣傳\n發LINE推波', status: 'active' }, // 6
+                    { title: '雙11設定', content: '官網LINE普發金\n調庫存', status: 'done' }, // 7
+                    { title: '知識導向', content: '周一至周五諮詢\n數位課程', status: 'none' }  // 8
+                ]
+            },
+            {
+                id: 'p2',
+                name: '富泰 (Futai)',
+                grids: [
+                    { title: 'SBIR', content: '計畫撰寫\n進度追蹤', status: 'active' },
+                    { title: '社群', content: '內容規劃', status: 'none' },
+                    { title: '鏈結', content: '外部合作', status: 'none' },
+                    { title: '廣告規劃', content: '投放策略', status: 'active' },
+                    { title: '女性創業定位', content: '定位: 女性/時尚/旅遊/靈性療癒\n商品盤點', status: 'active' }, // Center
+                    { title: '網紅業務', content: 'KOL媒合', status: 'none' },
+                    { title: '公部門推廣', content: '政府標案', status: 'none' },
+                    { title: '企業推廣', content: 'B2B開發', status: 'none' },
+                    { title: '記者推廣', content: '新聞稿發布', status: 'none' }
+                ]
+            },
+            {
+                id: 'p3',
+                name: '顧客維繫 (Customer)',
+                grids: [
+                    { title: '打電話', content: '定期關懷', status: 'none' },
+                    { title: '社群跟進', content: 'LINE/IG訊息回覆\n影音互動', status: 'active' },
+                    { title: '開發', content: '新客源', status: 'none' },
+                    { title: '美容', content: '準備禮物/卡片', status: 'none' },
+                    { title: '顧客維繫核心', content: '內化整理資料\n建立信任感', status: 'active' }, // Center
+                    { title: '營養', content: '健康諮詢', status: 'none' },
+                    { title: '淨水器', content: '濾心更換提醒', status: 'none' },
+                    { title: '長客', content: 'VIP經營', status: 'done' },
+                    { title: '空氣清淨', content: '保養維護', status: 'none' }
+                ]
+            }
+        ];
+
+        // --- 2. 狀態管理 ---
+        let projects = JSON.parse(localStorage.getItem('focusGridData')) || defaultData;
+        let currentProjectId = projects[0].id;
+        let editingCellIndex = null;
+
+        // --- 3. 核心功能函數 ---
+
+        function renderSidebar() {
+            const list = document.getElementById('projectList');
+            list.innerHTML = '';
+            projects.forEach(p => {
+                const li = document.createElement('li');
+                li.className = `project-item ${p.id === currentProjectId ? 'active' : ''}`;
+                li.textContent = p.name;
+                li.onclick = () => switchProject(p.id);
+                list.appendChild(li);
+            });
+        }
+
+        function renderGrid() {
+            const project = projects.find(p => p.id === currentProjectId);
+            document.getElementById('currentTitle').textContent = project.name;
+            
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+
+            project.grids.forEach((cell, index) => {
+                const div = document.createElement('div');
+                // 判斷是否為中心格 (index 4)
+                const isCenter = index === 4;
+                div.className = `grid-cell ${isCenter ? 'center-cell' : ''}`;
+                div.onclick = () => openModal(index);
+
+                // 狀態點
+                if (!isCenter && cell.status !== 'none') {
+                    const dot = document.createElement('div');
+                    dot.className = `status-dot ${cell.status}`;
+                    div.appendChild(dot);
+                }
+
+                // 內容 HTML
+                const titleHTML = `<div class="cell-title">${cell.title || (isCenter ? '核心主題' : '點擊編輯')}</div>`;
+                const contentHTML = isCenter 
+                    ? `<div style="font-size:0.9rem; opacity:0.8;">${cell.content || ''}</div>`
+                    : `<div class="cell-content">${cell.content || ''}</div>`;
+
+                div.innerHTML += titleHTML + contentHTML;
+                container.appendChild(div);
+            });
+        }
+
+        function switchProject(id) {
+            currentProjectId = id;
+            renderSidebar();
+            renderGrid();
+        }
+
+        function addNewProject() {
+            const name = prompt("請輸入新主題名稱：", "新專案");
+            if (name) {
+                const newProject = {
+                    id: 'p' + Date.now(),
+                    name: name,
+                    grids: Array(9).fill({ title: '', content: '', status: 'none' })
+                };
+                // 設定中心格預設值
+                newProject.grids[4] = { title: name, content: '核心目標', status: 'active' };
+                
+                projects.push(newProject);
+                saveToLocal();
+                switchProject(newProject.id);
+            }
+        }
+
+        // --- 4. 編輯視窗相關 ---
+        const modal = document.getElementById('editModal');
+        const inputTitle = document.getElementById('editInputTitle');
+        const inputContent = document.getElementById('editInputContent');
+        const inputStatus = document.getElementById('editStatus');
+
+        function openModal(index) {
+            editingCellIndex = index;
+            const project = projects.find(p => p.id === currentProjectId);
+            const cell = project.grids[index];
+
+            inputTitle.value = cell.title;
+            inputContent.value = cell.content;
+            inputStatus.value = cell.status || 'none';
+            
+            document.getElementById('modalTitle').textContent = index === 4 ? '編輯核心主題' : '編輯任務內容';
+            modal.style.display = 'flex';
+            inputTitle.focus();
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function saveCell() {
+            if (editingCellIndex === null) return;
+
+            const project = projects.find(p => p.id === currentProjectId);
+            project.grids[editingCellIndex] = {
+                title: inputTitle.value,
+                content: inputContent.value,
+                status: inputStatus.value
+            };
+
+            saveToLocal();
+            renderGrid();
+            closeModal();
+        }
+
+        // --- 5. 資料持久化 ---
+        function saveToLocal() {
+            localStorage.setItem('focusGridData', JSON.stringify(projects));
+        }
+
+        // 點擊遮罩關閉
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // 鍵盤事件 (ESC 關閉)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                closeModal();
+            }
+        });
+
+        // 初始化
+        renderSidebar();
+        renderGrid();
+
+    </script>
+</body>
+</html>

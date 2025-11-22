@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Grid ToDo — 可無限新增頁面</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --accent:#7c5cff; --muted:#99a0b3; --glass: rgba(255,255,255,0.04);
+      --radius:12px; --gap:14px; --shadow: 0 6px 18px rgba(2,6,23,0.6);
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans TC",'Microsoft JhengHei',Arial;margin:0;height:100vh;background:linear-gradient(180deg,#08101a 0%, #071226 100%);color:#e6eef8;display:flex}
+
+    /* Sidebar */
+    .sidebar{width:260px;padding:20px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-right:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:12px}
+    .brand{font-weight:700;font-size:18px;display:flex;align-items:center;gap:10px}
+    .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#4aa7ff);display:flex;align-items:center;justify-content:center;font-weight:700;color:#021026}
+    .pages{flex:1;overflow:auto;padding-top:6px}
+    .page-item{padding:10px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer}
+    .page-item.active{background:linear-gradient(90deg, rgba(124,92,255,0.16), rgba(74,167,255,0.06));box-shadow:var(--shadow)}
+    .page-item .meta{display:flex;gap:10px;align-items:center}
+    .page-item .name{font-weight:600}
+    .page-controls{display:flex;gap:8px}
+    .btn{background:var(--glass);border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:9px;color:var(--muted);cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#4aa7ff);color:#021026;border:none}
+
+    /* Main */
+    .main{flex:1;padding:22px;display:flex;flex-direction:column;gap:18px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .topbar .title{font-size:20px;font-weight:700}
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--gap);align-items:start}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 4px 12px rgba(2,6,23,0.5);display:flex;flex-direction:column;gap:8px}
+    .card input[type=text]{width:100%;background:transparent;border:none;color:inherit;font-weight:600;font-size:15px}
+    .card .meta{display:flex;justify-content:space-between;align-items:center}
+    .task-text{color:var(--muted);font-size:14px}
+    .card .actions{display:flex;gap:8px}
+    .small{padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted);cursor:pointer}
+
+    .add-card{display:flex;align-items:center;justify-content:center;padding:16px;border-radius:12px;border:2px dashed rgba(255,255,255,0.03);color:var(--muted);cursor:pointer}
+
+    .footer{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px}
+
+    /* responsive */
+    @media (max-width:760px){.sidebar{display:none}.main{padding:12px}}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">GT</div>Grid ToDo</div>
+    <div style="display:flex;gap:8px">
+      <button id="addPageBtn" class="btn primary">+ 新增頁面</button>
+      <button id="exportBtn" class="btn">匯出</button>
+    </div>
+    <div class="pages" id="pagesList"></div>
+    <div class="footer">儲存：<span id="status">localStorage</span></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="title" id="pageTitle">未命名頁面</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="searchInput" placeholder="搜尋任務..." style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit" />
+        <button id="addCardBtn" class="btn">+ 新增任務</button>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button id="clearCompleted" class="btn">清除已完成</button>
+      <button id="deletePage" class="btn">刪除此頁</button>
+    </div>
+  </main>
+
+  <script>
+    // 簡單的 Grid ToDo，支援無限新增頁面並存在 localStorage
+    const STORAGE_KEY = 'grid-todo-pages-v1';
+
+    function uid(prefix='id'){return prefix + '_' + Math.random().toString(36).slice(2,9)}
+
+    // 初始資料
+    let pages = loadPages();
+    if(!pages || pages.length===0){
+      pages = [{id:uid('page'),name:'我的第一個頁面',tasks:[]}];
+      savePages();
+    }
+    let currentPageId = pages[0].id;
+
+    // UI elements
+    const pagesList = document.getElementById('pagesList');
+    const grid = document.getElementById('grid');
+    const pageTitle = document.getElementById('pageTitle');
+    const addPageBtn = document.getElementById('addPageBtn');
+    const addCardBtn = document.getElementById('addCardBtn');
+    const searchInput = document.getElementById('searchInput');
+    const clearCompleted = document.getElementById('clearCompleted');
+    const deletePageBtn = document.getElementById('deletePage');
+    const exportBtn = document.getElementById('exportBtn');
+
+    // render
+    function renderPagesList(){
+      pagesList.innerHTML='';
+      pages.forEach(p=>{
+        const el = document.createElement('div');
+        el.className='page-item'+(p.id===currentPageId?' active':'');
+        el.dataset.id = p.id;
+        el.innerHTML = `<div class="meta"><div style="width:10px;height:10px;border-radius:4px;background:linear-gradient(90deg,var(--accent),#4aa7ff);"></div><div class="name">${escapeHtml(p.name)}</div></div><div class="page-controls"><button class="btn" data-action="rename">編輯</button><button class="btn" data-action="dup">複製</button></div>`;
+        el.addEventListener('click', (e)=>{
+          if(e.target.dataset.action) return; // handled by buttons
+          currentPageId = p.id; renderAll();
+        });
+        el.querySelectorAll('button').forEach(b=>{
+          b.addEventListener('click', (ev)=>{ev.stopPropagation(); const act=b.dataset.action; if(act==='rename'){renamePage(p.id)} else if(act==='dup'){duplicatePage(p.id)}})
+        })
+        pagesList.appendChild(el);
+      })
+    }
+
+    function renderGrid(){
+      grid.innerHTML='';
+      const page = pages.find(x=>x.id===currentPageId);
+      if(!page){grid.innerHTML='<div style="color:var(--muted)">目前沒有頁面</div>'; return}
+      pageTitle.textContent = page.name || '未命名頁面';
+
+      const q = searchInput.value.trim().toLowerCase();
+
+      page.tasks.filter(t=>t.text.toLowerCase().includes(q)).forEach(t=>{
+        const c = document.createElement('div'); c.className='card';
+        c.innerHTML = `
+          <div class="meta"><div><input type="checkbox" ${t.done? 'checked' : ''} data-id="${t.id}" /></div><div style="margin-left:8px"><input type="text" value="${escapeHtml(t.text)}" data-id="${t.id}" /></div></div>
+          <div class="actions"><div class="task-text">建立：${new Date(t.created).toLocaleString()}</div><div style="display:flex;gap:6px"><button class="small" data-action="toggle" data-id="${t.id}">${t.done? '取消' : '完成'}</button><button class="small" data-action="del" data-id="${t.id}">刪除</button></div></div>
+        `;
+        // events
+        c.querySelector('input[type=text]').addEventListener('input', (e)=>{ updateTaskText(t.id, e.target.value)});
+        c.querySelector('input[type=checkbox]').addEventListener('change', (e)=>{ toggleTask(t.id, e.target.checked)});
+        c.querySelectorAll('button').forEach(b=>{ b.addEventListener('click', ()=>{ if(b.dataset.action==='del') deleteTask(t.id); else if(b.dataset.action==='toggle') toggleTask(t.id); }) })
+        grid.appendChild(c);
+      })
+
+      // add card placeholder
+      const add = document.createElement('div'); add.className='add-card'; add.textContent='+ 新增任務'; add.addEventListener('click', ()=>{ promptAddTask() });
+      grid.appendChild(add);
+    }
+
+    function renderAll(){ renderPagesList(); renderGrid(); savePages(); }
+
+    // CRUD
+    function promptAddTask(){
+      const text = prompt('任務標題：','新任務'); if(!text) return;
+      const page = pages.find(p=>p.id===currentPageId);
+      page.tasks.unshift({id:uid('task'), text:text, done:false, created:Date.now()}); renderAll();
+    }
+    function updateTaskText(taskId, text){ const page = pages.find(p=>p.id===currentPageId); const t = page.tasks.find(x=>x.id===taskId); if(t){t.text=text; savePages();} }
+    function toggleTask(taskId, force){ const page = pages.find(p=>p.id===currentPageId); const t = page.tasks.find(x=>x.id===taskId); if(t){ t.done = typeof force === 'boolean' ? force : !t.done; renderAll(); } }
+    function deleteTask(taskId){ const page = pages.find(p=>p.id===currentPageId); page.tasks = page.tasks.filter(x=>x.id!==taskId); renderAll(); }
+
+    // pages
+    addPageBtn.addEventListener('click', ()=>{ const name = prompt('頁面名稱：','新頁面'); const id = uid('page'); pages.unshift({id:id, name: name || '未命名頁面', tasks:[]}); currentPageId = id; renderAll(); })
+    function renamePage(pid){ const p = pages.find(x=>x.id===pid); const name = prompt('修改頁面名稱：', p.name); if(name!=null){ p.name = name; renderAll(); } }
+    function duplicatePage(pid){ const p = pages.find(x=>x.id===pid); const np = {id:uid('page'), name: p.name + ' (複製)', tasks: p.tasks.map(t=>({...t,id:uid('task')}))}; pages.unshift(np); currentPageId = np.id; renderAll(); }
+
+    deletePageBtn.addEventListener('click', ()=>{
+      if(!confirm('確定刪除此頁？此操作會移除頁面內所有任務')) return;
+      pages = pages.filter(p=>p.id!==currentPageId);
+      if(pages.length===0) pages.push({id:uid('page'),name:'新的頁面',tasks:[]});
+      currentPageId = pages[0].id; renderAll();
+    })
+
+    clearCompleted.addEventListener('click', ()=>{ const p = pages.find(x=>x.id===currentPageId); p.tasks = p.tasks.filter(t=>!t.done); renderAll(); })
+
+    addCardBtn.addEventListener('click', ()=> promptAddTask());
+
+    searchInput.addEventListener('input', ()=> renderGrid());
+
+    exportBtn.addEventListener('click', ()=>{
+      const data = JSON.stringify(pages,null,2);
+      const blob = new Blob([data],{type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'grid-todo-pages.json'; a.click(); URL.revokeObjectURL(url);
+    })
+
+    // storage
+    function savePages(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(pages)); }catch(e){ console.error('save failed',e)} }
+    function loadPages(){ try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null }catch(e){return null} }
+
+    // helpers
+    function escapeHtml(s){ return (s+'').replace(/[&"'<>]/g,(c)=>({"&":"&amp;","\"":"&quot;","'":"&#39;","<":"&lt;",">":"&gt;"}[c])) }
+
+    // initial render
+    renderAll();
+
+    // small UX: keyboard shortcut n = new page, t = new task
+    window.addEventListener('keydown',(e)=>{
+      if(e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return;
+      if(e.key==='n') addPageBtn.click();
+      if(e.key==='t') addCardBtn.click();
+    })
+  </script>
+</body>
+</html>

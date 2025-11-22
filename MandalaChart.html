@@ -1,40 +1,30 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FocusGrid - 柔性九宮格工作站 v3.0</title>
+    <title>FocusGrid - v4.0 穩定版</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        /* --- 1. 基礎設定與莫蘭迪色系 --- */
+        /* --- 1. 基礎與佈局 --- */
         :root {
             --bg-color: #F7F9F9;
             --sidebar-bg: #FFFFFF;
             --text-primary: #4A4A4A;
-            --text-secondary: #888888;
-            
-            /* 九宮格顏色 */
             --cell-center: #E8D5B5; 
             --cell-card: #FFFFFF;
-            --cell-hover: #F0F4F8;  
-            --accent-blue: #D4E0E8;
             --accent-purple: #E6E6FA;
             --btn-primary: #8CA6B3;
-            --btn-hover: #7590A0;
-            --btn-danger: #E57373; /* 刪除按鈕用柔和紅 */
+            --btn-danger: #E57373;
         }
 
-        * {
-            box-sizing: border-box;
-            font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-        }
+        * { box-sizing: border-box; font-family: "Microsoft JhengHei", sans-serif; }
 
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             background-color: var(--bg-color);
             color: var(--text-primary);
             display: flex;
@@ -42,268 +32,393 @@
             overflow: hidden;
         }
 
-        /* --- 2. 側邊欄樣式 --- */
+        /* --- 系統狀態顯示 (除錯用) --- */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 9999;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        .error-msg { color: red; margin-top: 20px; display: none; }
+
+        /* --- 側邊欄 --- */
         .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-bg);
+            width: 260px; min-width: 260px;
+            background: var(--sidebar-bg);
             border-right: 1px solid #E0E0E0;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.02);
-            z-index: 10;
+            display: flex; flex-direction: column;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--btn-primary);
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--btn-primary); margin-bottom: 20px; }
 
-        .project-list {
-            list-style: none;
-            padding: 0;
-            flex: 1;
-            overflow-y: auto;
-        }
-
+        .project-list { list-style: none; padding: 0; flex: 1; overflow-y: auto; }
         .project-item {
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 500;
+            padding: 12px; margin-bottom: 5px; border-radius: 8px; cursor: pointer;
+            display: flex; justify-content: space-between;
         }
-
-        .project-item:hover { background-color: var(--bg-color); }
-        .project-item.active { background-color: var(--accent-blue); color: #334E68; }
+        .project-item:hover { background: #F0F0F0; }
+        .project-item.active { background: #D4E0E8; color: #2C3E50; font-weight: bold; }
 
         .add-btn {
-            margin-top: 10px;
-            padding: 12px;
-            background-color: var(--bg-color);
-            border: 2px dashed #D0D0D0;
-            border-radius: 12px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            text-align: center;
-            transition: 0.2s;
+            padding: 10px; border: 2px dashed #ccc; border-radius: 8px;
+            text-align: center; cursor: pointer; color: #888;
         }
         .add-btn:hover { border-color: var(--btn-primary); color: var(--btn-primary); }
 
-        /* --- 3. 主工作區樣式 --- */
+        /* --- 主內容區 --- */
         .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 30px;
-            position: relative;
-            overflow-y: auto;
+            flex: 1; display: flex; flex-direction: column; padding: 20px;
+            height: 100%; overflow: hidden;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-        }
-
-        .header-title-group {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .header h2 {
-            font-size: 1.8rem;
-            margin: 0;
-            color: #333;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: 0.2s;
-        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0;}
         
-        .header h2:hover {
-            border-bottom-color: var(--btn-primary);
-        }
+        .title-area h2 { margin: 0; font-size: 1.6rem; cursor: pointer; display: inline-block;}
+        .tools { display: flex; gap: 10px; align-items: center; margin-top: 5px; }
+        .icon-btn { cursor: pointer; opacity: 0.5; font-size: 1.2rem; }
+        .icon-btn:hover { opacity: 1; }
 
-        /* 標題旁的操作圖示 */
-        .icon-btn {
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 1.1rem;
-            opacity: 0.4;
-            transition: 0.2s;
-            padding: 5px;
-            border-radius: 5px;
+        .export-btns button {
+            padding: 6px 12px; border: 1px solid #ccc; background: #fff;
+            border-radius: 5px; cursor: pointer;
         }
-        .icon-btn:hover { opacity: 1; background-color: #EEE; }
-        .icon-btn.edit:hover { color: var(--btn-primary); }
-        .icon-btn.delete:hover { color: var(--btn-danger); background-color: #FFEBEE; }
+        .export-btns button:hover { background: var(--btn-primary); color: #fff; border-color: transparent;}
 
-        .header .subtitle {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-top: 5px;
-        }
-
-        /* 匯出按鈕群組 */
-        .export-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-export {
-            padding: 8px 16px;
-            border: 1px solid #E0E0E0;
-            background: white;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: 0.2s;
-            color: #666;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .btn-export:hover {
-            background-color: var(--btn-primary);
-            color: white;
-            border-color: var(--btn-primary);
-        }
-
-        /* --- 4. 九宮格核心樣式 --- */
+        /* --- 九宮格 --- */
         .grid-wrapper {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            background-color: var(--bg-color); 
+            flex: 1; background: var(--bg-color); 
+            display: flex; justify-content: center; align-items: center;
+            overflow: auto; /* 允許小螢幕捲動 */
             padding: 10px;
         }
 
         .grid-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, minmax(180px, 1fr));
-            gap: 20px;
-            max-width: 1000px;
-            width: 100%;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%; max-width: 900px;
+            height: 100%; max-height: 800px;
         }
 
         .grid-cell {
-            background-color: var(--cell-card);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            cursor: pointer;
-            position: relative;
-            border: 1px solid transparent;
+            background: var(--cell-card); border-radius: 12px; padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column;
+            cursor: pointer; position: relative;
+            min-height: 100px;
+            transition: transform 0.2s;
         }
+        .grid-cell:hover { transform: translateY(-3px); }
 
-        .grid-cell:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
-        }
-
-        .grid-cell.center-cell {
-            background-color: var(--cell-center);
+        .grid-cell.center {
+            background: var(--cell-center);
             border: 2px solid #D8C5A5;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+            text-align: center; justify-content: center;
         }
-
-        @keyframes breathe {
-            0% { box-shadow: 0 0 0 0 rgba(232, 213, 181, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(232, 213, 181, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(232, 213, 181, 0); }
-        }
-
-        .grid-cell.center-cell { animation: breathe 3s infinite; }
+        /* 移除動畫以免影響效能，改用靜態樣式 */
+        .grid-cell.center { box-shadow: 0 0 15px rgba(232, 213, 181, 0.6); }
 
         .cell-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #2D3748;
-            border-bottom: 2px solid var(--accent-purple);
-            padding-bottom: 5px;
-            display: inline-block;
+            font-weight: bold; border-bottom: 2px solid var(--accent-purple);
+            padding-bottom: 5px; margin-bottom: 5px; color: #333;
         }
+        .center .cell-title { border-bottom: none; font-size: 1.4rem; }
 
-        .center-cell .cell-title {
-            font-size: 1.5rem;
-            border-bottom: none;
-            margin-bottom: 5px;
-        }
+        .cell-content { font-size: 0.9rem; color: #666; white-space: pre-wrap; overflow: hidden; flex: 1;}
 
-        .cell-content {
-            font-size: 0.9rem;
-            color: #555;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        /* 狀態點 */
         .status-dot {
-            position: absolute;
-            top: 15px; right: 15px;
-            width: 12px; height: 12px;
-            border-radius: 50%;
-            background-color: #E0E0E0;
+            position: absolute; top: 10px; right: 10px;
+            width: 10px; height: 10px; border-radius: 50%;
         }
-        .status-dot.active { background-color: #F6AD55; }
-        .status-dot.done { background-color: #68D391; }
+        .status-dot.active { background: orange; }
+        .status-dot.done { background: #4CAF50; }
 
-        /* --- 5. 編輯彈出視窗 (Modal) --- */
+        /* --- 彈跳視窗 --- */
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.3);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            backdrop-filter: blur(3px);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); display: none;
+            justify-content: center; align-items: center; z-index: 1000;
         }
-
-        .modal {
-            background: white;
-            width: 500px;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal h3 { margin-top: 0; color: var(--btn-primary); }
+        .modal { background: #fff; padding: 25px; border-radius: 15px; width: 400px; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem;}
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%; padding: 10px;
-            border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; outline: none;
-        }
-        .form-group textarea { height: 120px; resize: none; }
-        .form-group input:focus, .form-group textarea:focus { border-color: var(--btn-primary); }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;}
+        .btns { display: flex; justify-content: flex-end; gap: 10px; }
+    </style>
+</head>
+<body>
 
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight
+    <div id="loading-screen">
+        <h2>正在啟動 FocusGrid...</h2>
+        <p>如果此畫面停留超過 3 秒，代表發生錯誤。</p>
+        <div class="error-msg" id="error-msg">偵測到錯誤，已重置系統。請重新整理頁面。</div>
+        <button onclick="hardReset()" style="margin-top:20px; padding:10px;">強制重置資料 (修復用)</button>
+    </div>
+
+    <div class="sidebar">
+        <div class="logo">💠 FocusGrid</div>
+        <ul class="project-list" id="projectList"></ul>
+        <div class="add-btn" onclick="addNewProject()">+ 新增畫布</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="title-area">
+                <h2 id="currentTitle" onclick="renameProject()">載入中...</h2>
+                <div class="tools">
+                    <span class="icon-btn" onclick="renameProject()" title="重新命名">✏️</span>
+                    <span class="icon-btn" onclick="deleteProject()" title="刪除畫布" style="color:red;">🗑️</span>
+                </div>
+            </div>
+            <div class="export-btns">
+                <button onclick="exportJPG()">📷 JPG</button>
+                <button onclick="exportExcel()">📊 Excel</button>
+            </div>
+        </div>
+
+        <div class="grid-wrapper" id="captureArea">
+            <div class="grid-container" id="gridContainer"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h3>編輯內容</h3>
+            <div class="form-group"><label>標題</label><input type="text" id="inpTitle"></div>
+            <div class="form-group"><label>內容</label><textarea id="inpContent" rows="5"></textarea></div>
+            <div class="form-group">
+                <label>狀態</label>
+                <select id="inpStatus">
+                    <option value="none">待辦</option>
+                    <option value="active">進行中</option>
+                    <option value="done">完成</option>
+                </select>
+            </div>
+            <div class="btns">
+                <button onclick="closeModal()">取消</button>
+                <button onclick="saveCell()" style="background:var(--btn-primary); color:#fff; border:none; padding:8px 15px; border-radius:5px;">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 核心變數 ---
+        // 注意：這裡改了 Key，這會強制忽略舊的壞資料
+        const STORAGE_KEY = 'focusGrid_v4_stable'; 
+        let projects = [];
+        let currentId = null;
+        let editIndex = null;
+
+        // --- 1. 產生預設資料 (工廠模式，避免參照錯誤) ---
+        function createDefaultData() {
+            const createGrids = (centerName) => {
+                const arr = Array.from({length: 9}, () => ({title: '', content: '', status: 'none'}));
+                arr[4] = { title: centerName, content: '核心目標', status: 'active' };
+                return arr;
+            };
+
+            // 霓可資料
+            const p1 = createGrids('霓可 (Nicole)');
+            p1[0] = {title:'AI 應用', content:'MOMO提交表', status:'active'};
+            p1[1] = {title:'蝦皮/官網', content:'行銷設定', status:'active'};
+            
+            return [
+                { id: 'p1', name: '霓可 (Nicole)', grids: p1 },
+                { id: 'p2', name: '富泰 (Futai)', grids: createGrids('女性創業定位') },
+                { id: 'p3', name: '顧客維繫', grids: createGrids('顧客信任') }
+            ];
+        }
+
+        // --- 2. 系統初始化 (Main Entry) ---
+        window.onload = function() {
+            try {
+                // 讀取資料
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    projects = JSON.parse(raw);
+                }
+
+                // 驗證資料有效性 (如果是空陣列或格式錯誤，強制用預設值)
+                if (!Array.isArray(projects) || projects.length === 0) {
+                    projects = createDefaultData();
+                }
+
+                // 設定初始 ID
+                currentId = projects[0].id;
+
+                // 渲染畫面
+                renderSidebar();
+                renderGrid();
+
+                // 移除載入遮罩
+                document.getElementById('loading-screen').style.display = 'none';
+
+            } catch (err) {
+                console.error("Critical Error:", err);
+                document.getElementById('error-msg').style.display = 'block';
+                document.getElementById('error-msg').textContent = "系統發生錯誤：" + err.message;
+            }
+        };
+
+        // --- 3. 渲染邏輯 ---
+        function renderSidebar() {
+            const list = document.getElementById('projectList');
+            list.innerHTML = '';
+            projects.forEach(p => {
+                const li = document.createElement('li');
+                li.className = `project-item ${p.id === currentId ? 'active' : ''}`;
+                li.textContent = p.name;
+                li.onclick = () => { currentId = p.id; renderSidebar(); renderGrid(); };
+                list.appendChild(li);
+            });
+        }
+
+        function renderGrid() {
+            // 尋找當前專案，如果找不到 (被刪了)，就回退到第一個
+            let proj = projects.find(p => p.id === currentId);
+            if (!proj && projects.length > 0) {
+                proj = projects[0];
+                currentId = proj.id;
+            }
+            if (!proj) return; // 沒資料了
+
+            document.getElementById('currentTitle').textContent = proj.name;
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+
+            proj.grids.forEach((cell, idx) => {
+                const div = document.createElement('div');
+                const isCenter = idx === 4;
+                div.className = `grid-cell ${isCenter ? 'center' : ''}`;
+                div.onclick = () => openModal(idx);
+
+                // 狀態點
+                if (!isCenter && cell.status !== 'none') {
+                    const dot = document.createElement('div');
+                    dot.className = `status-dot ${cell.status}`;
+                    div.appendChild(dot);
+                }
+
+                // 內容
+                const t = cell.title || (isCenter ? '核心' : '');
+                const c = cell.content || '';
+                div.innerHTML = `<div class="cell-title">${t}</div><div class="cell-content">${c}</div>`;
+                
+                container.appendChild(div);
+            });
+        }
+
+        // --- 4. 操作邏輯 ---
+        function addNewProject() {
+            const name = prompt("輸入新主題名稱:", "新專案");
+            if (!name) return;
+            const newProj = {
+                id: 'p' + Date.now(),
+                name: name,
+                grids: Array.from({length: 9}, () => ({title: '', content: '', status: 'none'}))
+            };
+            newProj.grids[4] = { title: name, content: '核心', status: 'active' };
+            projects.push(newProj);
+            save();
+            currentId = newProj.id;
+            renderSidebar();
+            renderGrid();
+        }
+
+        function renameProject() {
+            const proj = projects.find(p => p.id === currentId);
+            const newName = prompt("修改名稱:", proj.name);
+            if (newName) {
+                proj.name = newName;
+                save();
+                renderSidebar();
+                renderGrid();
+            }
+        }
+
+        function deleteProject() {
+            if (projects.length <= 1) {
+                alert("至少保留一個畫布！");
+                return;
+            }
+            if (confirm("確定刪除嗎？")) {
+                projects = projects.filter(p => p.id !== currentId);
+                currentId = projects[0].id;
+                save();
+                renderSidebar();
+                renderGrid();
+            }
+        }
+
+        function save() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+        }
+
+        // --- 5. 編輯視窗邏輯 ---
+        const modal = document.getElementById('editModal');
+        const iTitle = document.getElementById('inpTitle');
+        const iContent = document.getElementById('inpContent');
+        const iStatus = document.getElementById('inpStatus');
+
+        function openModal(idx) {
+            editIndex = idx;
+            const proj = projects.find(p => p.id === currentId);
+            const cell = proj.grids[idx];
+            iTitle.value = cell.title;
+            iContent.value = cell.content;
+            iStatus.value = cell.status;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() { modal.style.display = 'none'; }
+
+        function saveCell() {
+            if (editIndex === null) return;
+            const proj = projects.find(p => p.id === currentId);
+            proj.grids[editIndex] = {
+                title: iTitle.value,
+                content: iContent.value,
+                status: iStatus.value
+            };
+            save();
+            renderGrid();
+            closeModal();
+        }
+
+        // --- 6. 匯出功能 (簡易版) ---
+        function exportJPG() {
+            if (typeof html2canvas === 'undefined') { alert("匯出元件載入失敗"); return; }
+            const area = document.getElementById('captureArea');
+            html2canvas(area, { backgroundColor: '#F7F9F9' }).then(canvas => {
+                const a = document.createElement('a');
+                a.download = 'grid.jpg';
+                a.href = canvas.toDataURL();
+                a.click();
+            });
+        }
+
+        function exportExcel() {
+            if (typeof XLSX === 'undefined') { alert("匯出元件載入失敗"); return; }
+            const proj = projects.find(p => p.id === currentId);
+            const data = [["位置","標題","內容","狀態"]];
+            proj.grids.forEach((c, i) => data.push([i, c.title, c.content, c.status]));
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Grid");
+            XLSX.writeFile(wb, `${proj.name}.xlsx`);
+        }
+
+        // --- 7. 強制重置 (救命按鈕) ---
+        function hardReset() {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+
+        // 點遮罩關閉
+        modal.addEventListener('click', e => { if(e.target === modal) closeModal(); });
+
+    </script>
+</body>
+</html>

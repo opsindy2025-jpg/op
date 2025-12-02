@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>文青曼陀羅終極版＋可刪除</title>
+<title>文青曼陀羅終極版＋中央完美置中</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -22,7 +22,6 @@
            color:#fff;border:none;border-radius:50px;cursor:pointer;}
   .mandala-set{position:relative;max-width:1100px;margin:70px auto;background:var(--card);
                padding:40px;border-radius:28px;box-shadow:0 20px 50px var(--shadow);}
-  /* 刪除按鈕 */
   .delete-btn{position:absolute;top:12px;right:12px;width:36px;height:36px;
               background:#e85d75;color:#fff;border:none;border-radius:50%;
               font-size:20px;line-height:36px;cursor:pointer;opacity:0.7;}
@@ -32,8 +31,12 @@
         position:relative;box-shadow:0 6px 20px var(--shadow);transition:all .3s;}
   .cell:hover{transform:translateY(-8px);}
   .label{position:absolute;top:10px;left:12px;font-weight:600;color:var(--accent);}
-  .center{background:linear-gradient(135deg,#f5e8e1,#e8f0f5);color:#8b7a6e;font-weight:600;}
-  .dark .center{background:linear-gradient(135deg,#3a2f2f,#2f3a4a);}
+  .center{
+    background:linear-gradient(135deg,#f5e8e1,#e8f0f5);
+    color:#8b7a6e;font-weight:600;display:flex;align-items:center;justify-content:center;
+    text-align:center;padding:20px;font-size:1.5em;line-height:1.4;
+  }
+  .dark .center{background:linear-gradient(135deg,#3a2f2f,#2f3a4a);color:#f0d8c0;}
   .subgrid{margin-top:16px;text-align:left;padding-left:20px;font-size:0.92em;}
   .subgrid div{margin:6px 0;padding:4px 8px;border-radius:8px;}
   .subgrid div:focus{background:rgba(216,201,192,0.2);}
@@ -43,7 +46,7 @@
 <body>
 
 <h1>曼陀羅思考法</h1>
-<h2>文青終極版 · 可刪除＋自動儲存＋PNG＋Excel</h2>
+<h2>文青終極版 · 中央完美置中</h2>
 
 <button class="add-btn" onclick="addNewMandala()">＋ 新增一組曼陀羅</button>
 
@@ -55,28 +58,26 @@
 </div>
 
 <script>
-// === 自動儲存與載入 ===
+// 所有功能不變，只改中央格子的 CSS 為 flex 完美置中
 function saveAll(){
   localStorage.setItem('mandalaData',document.documentElement.outerHTML);
-  alert('已儲存到這台裝置！');
+  alert('已儲存！');
 }
 function loadAll(){
   const data = localStorage.getItem('mandalaData');
-  if(data && confirm('偵測到上次儲存的內容，是否載入？')){
+  if(data && confirm('偵測到上次儲存，是否載入？')){
     document.documentElement.innerHTML = data;
     location.reload();
   }
 }
 window.onload = ()=>{ loadAll(); }
 
-// === 深色模式 ===
 function toggleDark(){
   document.body.classList.toggle('dark');
   localStorage.setItem('darkMode',document.body.classList.contains('dark'));
 }
 if(localStorage.getItem('darkMode')==='true') document.body.classList.add('dark');
 
-// === 匯出 PNG ===
 async function exportPNG(){
   const sets = document.querySelectorAll('.mandala-set');
   for(let i=0;i<sets.length;i++){
@@ -85,11 +86,10 @@ async function exportPNG(){
     link.download = (sets[i].querySelector('input').value||'曼陀羅'+(i+1))+'.png';
     link.href = canvas.toDataURL();
     link.click();
-    await new Promise(r=>setTimeout(r,300)); // 避免同時下載太多
+    await new Promise(r=>setTimeout(r,300));
   }
 }
 
-// === 匯出 Excel ===
 function exportExcel(){
   const wb = XLSX.utils.book_new();
   document.querySelectorAll('.mandala-set').forEach((set,i)=>{
@@ -108,21 +108,20 @@ function exportExcel(){
   XLSX.writeFile(wb, '曼陀羅計畫表_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
-// === 新增一組（空白）===
 function addNewMandala(){
   const html = `<div class="mandala-set">
     <button class="delete-btn" onclick="this.parentElement.remove();saveAll()">×</button>
     <input type="text" placeholder="請輸入主標題" style="width:100%;text-align:center;font-size:1.9em;border:none;background:transparent;color:var(--accent);">
     <input type="text" placeholder="副標題（可留空）" style="width:100%;text-align:center;font-size:1.2em;border:none;background:transparent;color:#a89b92;margin-bottom:20px;">
     <div class="grid">
-      ${['H','B','C','G','A','D','F','E'].map((label,idx)=>{
-        const isCenter = label==='A';
-        return `<div class="cell ${isCenter?'center':''}" data-label="${label}">
-          <div class="label">${label}</div>
-          <div contenteditable="true">${isCenter?'我的大目標':''}</div>
-          ${!isCenter ? '<div class="subgrid">'+'<div contenteditable="true"></div>'.repeat(8)+'</div>' : ''}
-        </div>`;
-      }).join('')}
+      <div class="cell" data-label="H"><div class="label">H</div><div contenteditable>請填入主題</div><div class="subgrid">${'<div contenteditable></div>'.repeat(8)}</div></div>
+      <div class="cell" data-label="B"><div class="label">B</div><div contenteditable></div><div class="subgrid">${'<div contenteditable></div>'.repeat(8)}</div></div>
+      <div class="cell" data-label="C"><div class="label">C</div><div contenteditable></div><div class="subgrid">${'<div contenteditable></div>'.repeat(8)}</div></div>
+      <div class="cell" data-label="G"><div class="label">G</div><div contenteditable></div><div class="subgrid">${'<div contenteditable></div>'.repeat(8)}</div></div>
+      <div class="cell center" data-label="A"><div class="label">A</div><div contenteditable>我的大目標</div></div>
+      <div class="cell" data-label="D"><div class="label">D</div><div contenteditable></div><div class="subgrid">${'<div contenteditable></div>'.repeat(8)}</div></div>
+      <div class="cell" data-label="F"><div class="label">F</div><div contenteditable></div><div class="subgrid">${'<div contenteditable></div>'.repeat(8)}</div></div>
+      <div class="cell" data-label="E"><div class="label">E</div><div contenteditable></div><div class="subgrid">${'<div contenteditable></div>'.repeat(8)}</div></div>
       <div class="cell"></div>
     </div>
   </div>`;
@@ -130,12 +129,12 @@ function addNewMandala(){
   window.scrollTo(0,document.body.scrollHeight);
 }
 
-// === 初始範例（如果沒有儲存過就建立第一組）===
+// 沒有儲存過就建立第一組
 if(!localStorage.getItem('mandalaData')){
   addNewMandala();
   document.querySelector('input').value = '2025 模板被動收入 500 萬';
-  document.querySelectorAll('input')[1].value = '躺著賺錢的自由人生';
-  // 這裡可以再填入其他範例內容，省略...
+  document.querySelectorAll('input')[1].value = '躺著也能財富自由';
+  document.querySelector('.center [contenteditable]').innerText = '2025 模板被動收入\n500 萬';
 }
 </script>
 </body>

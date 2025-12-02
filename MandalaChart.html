@@ -2,81 +2,28 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>2025 超級曼陀羅 - 多頁分類宇宙計畫 (計畫版)</title>
+<title>2025 超級曼陀羅 - 無限垂直曼陀羅計畫板</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <style>
   :root{--bg:#faf8f5;--card:#fffdf9;--text:#5d5d5d;--accent:#b8a89f;--shadow:rgba(180,160,140,0.18);--project-color:#6c757d;}
   body.dark{--bg:#1a1a1a;--card:#252525;--text:#e8e8e8;--accent:#d8c9c0;--shadow:rgba(0,0,0,0.5);--project-color:#ced4da;}
-  body{margin:0;padding:20px 20px 160px;background:var(--bg);color:var(--text);
+  body{margin:0;padding:20px 20px 180px;background:var(--bg);color:var(--text);
        font-family:"Noto Sans TC",sans-serif;overflow-x:auto;overflow-y:auto;min-height:100vh;}
   h1{text-align:center;color:var(--accent);font-size:2.6em;margin:20px 0 10px;}
+  
+  /* 新增分頁按鈕 */
+  .add-mandala-btn{
+    display:block;margin:40px auto;padding:16px 32px;background:#4caf50;color:#fff;border:none;
+    border-radius:30px;cursor:pointer;font-size:1.3em;font-weight:600;box-shadow:0 8px 25px var(--shadow);
+    width:320px;text-align:center;
+  }
+  .add-mandala-btn:hover{transform:scale(1.05);}
 
-  /* ------------------- [修改] 標籤列結構 ------------------- */
-  .tabs{
-    display:flex;flex-direction:column;gap:15px;justify-content:center;margin:30px 0 50px;
-    padding:0 0px; /* 移除左右 padding */
-    max-width:100%;
-  }
-  .project-group{
-    padding:10px 0;border:1px solid rgba(0,0,0,0.05);border-radius:12px;
-    background:rgba(255,255,255,0.8);box-shadow:0 8px 25px var(--shadow);
-    max-width:1000px;margin:0 auto;
-    width: 100%; /* 確保在手機上撐滿寬度 */
-  }
-  .dark .project-group{background:rgba(0,0,0,0.2);}
-  .project-name{
-    display:flex;align-items:center;justify-content:center;
-    padding:5px 20px;font-size:1.3em;font-weight:700;color:var(--project-color);
-    cursor:move; 
-  }
-  .project-name:hover{color:var(--accent);}
-
-  /* [關鍵修改] 讓分頁列表橫向捲動 */
-  .tab-list{
-    display:flex; /* 保持 flex */
-    flex-wrap: nowrap; /* 確保不換行，強制橫向 */
-    gap:10px;
-    justify-content: flex-start; /* 左對齊 */
-    padding:10px 20px;
-    overflow-x: auto; /* 允許橫向捲動 */
-    -webkit-overflow-scrolling: touch; /* iOS 流暢捲動 */
-    scrollbar-width: none; /* Firefox 隱藏捲軸 */
-  }
-  .tab-list::-webkit-scrollbar {
-    display: none; /* Chrome/Safari 隱藏捲軸 */
-  }
-  /* ------------------- [修改結束] ------------------- */
-
-  .tab{
-    padding:10px 20px;background:var(--card);color:var(--text);border:2px solid transparent;
-    border-radius:30px;cursor:move;
-    font-weight:500;box-shadow:0 4px 12px var(--shadow);
-    transition:all .3s;min-width:100px;text-align:center;flex-shrink:0; /* 確保分頁不被擠壓 */
-  }
-  .tab.active{background:var(--accent);color:#fff;transform:scale(1.05);cursor:default;}
-  .tab:hover:not(.active){background:rgba(184,168,159,0.2);}
-  .tab.add-tab-project{
-    background:#4caf50 !important;color:#fff !important;cursor:pointer;
-    padding:10px 20px;font-weight:600;
-  }
-  .project-name .edit-project-btn{
-    margin-left:10px;cursor:pointer;font-size:0.8em;color:var(--accent);opacity:0.6;
-    transition:opacity .2s;
-  }
-  .project-name .edit-project-btn:hover{opacity:1;}
-  .add-project-btn{
-    margin:15px auto 0;
-    padding:10px 20px;background:#2196f3 !important;color:#fff !important;border-radius:30px;
-    cursor:pointer;font-weight:600;box-shadow:0 4px 12px var(--shadow);
-  }
-
-  /* 其餘樣式保持不變 */
-  .super-mandala{display:none;width:1480px;margin:0 auto 120px;padding:40px;background:var(--card);
+  /* 曼陀羅表格樣式 */
+  .super-mandala{width:1480px;max-width:96vw;margin:60px auto;padding:40px;background:var(--card);
     border-radius:32px;box-shadow:0 30px 80px var(--shadow);position:relative;}
-  .super-mandala.active{display:block;}
   .delete-super{position:absolute;top:16px;right:16px;width:44px;height:44px;
     background:#e85d75;color:#fff;border:none;border-radius:50%;font-size:26px;cursor:pointer;z-index:10;}
   .big-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;}
@@ -98,46 +45,28 @@
   .mini-center{background:linear-gradient(135deg,#ffe0d8,#d8e8ff)!important;
     font-weight:700;font-size:1.1em!important;}
   .dark .mini-center{background:linear-gradient(135deg,#4a2f3a,#2f3a4a)!important;color:#f0d8c0;}
+
   .toolbar{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);
     background:var(--card);padding:12px 22px;border-radius:50px;
-    box-shadow:0 12px 40px var(--shadow);z-index:999;display:flex;gap:14px;}
+    box-shadow:0 12px 40px var(--shadow);z-index:999;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
   .btn{padding:12px 24px;background:var(--accent);color:#fff;border:none;
        border-radius:30px;cursor:pointer;font-size:15px;}
   [contenteditable]:focus{outline:2px solid var(--accent);background:rgba(184,168,159,0.15);}
-
-  /* 彈窗樣式 */
-  .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);
-    display:none;align-items:center;justify-content:center;z-index:1000;}
-  .modal-content{background:var(--card);padding:30px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.3);
-    width:90%;max-width:400px;text-align:center;}
-  .modal-content h3{color:var(--accent);margin-top:0;}
-  .modal-content label{display:block;text-align:left;margin-bottom:5px;font-weight:600;}
-  .modal-content select, .modal-content input[type="text"]{
-    width:100%;padding:10px;margin-bottom:15px;border:1px solid var(--accent);
-    border-radius:8px;box-sizing:border-box;background:var(--bg);color:var(--text);
-  }
-  .modal-actions{display:flex;justify-content:space-around;margin-top:20px;}
-  .modal-actions button{flex-grow:1;margin:0 5px;padding:10px;border-radius:8px;font-weight:600;}
-  .modal-actions .confirm-btn{background:#4CAF50;color:white;border:none;}
-  .modal-actions .cancel-btn{background:#e85d75;color:white;border:none;}
 </style>
 </head>
 <body>
+<h1>2025 超級曼陀羅 - 無限垂直宇宙計畫板</h1>
 
-<h1>2025 超級曼陀羅 - 多頁分類宇宙計畫 (計畫版)</h1>
-
-<div class="tabs" id="project-list">
-  </div>
-<div class="tabs">
-    <div class="tab add-project-btn" onclick="addNewProject()">＋ 新增計畫</div>
+<div style="text-align:center;">
+  <div class="add-mandala-btn" onclick="addNewMandala()">＋ 新增曼陀羅表格</div>
 </div>
 
-<div id="mandala-content-container">
-  <div id="tab1" class="super-mandala active" data-project-id="project1">
+<div id="mandala-container">
+  <!-- 這裡會動態插入曼陀羅表格 -->
+  <div class="super-mandala" data-id="mandala1">
     <button class="delete-super">×</button>
-    <input type="text" value="2025 模板被動收入 500 萬 - 宇宙版" style="width:100%;text-align:center;font-size:2.3em;border:none;background:transparent;color:var(--accent);font-weight:700;margin-bottom:10px;">
-    <input type="text" value="躺著也能財富自由（81 格全開！）" style="width:100%;text-align:center;font-size:1.4em;border:none;background:transparent;color:#a89b92;">
-
+    <input type="text" value="2025 模板被動收入 500 萬 - 宇宙版" class="mandala-title">
+    <input type="text" value="躺著也能財富自由（81 格全開！）" class="mandala-subtitle">
     <div class="big-grid">
       <div class="big-cell"><div class="big-title" contenteditable>里程碑與生活平衡</div><div class="mini-grid">
         <div class="mini-cell" contenteditable>Q1 20萬</div><div class="mini-cell" contenteditable>Q2 50萬</div><div class="mini-cell" contenteditable>Q3 80萬</div>
@@ -171,14 +100,12 @@
       <div class="big-cell"><div class="big-title" contenteditable>內容行銷引擎</div><div class="mini-grid">
         <div class="mini-cell" contenteditable>每週 1 支 YouTube</div><div class="mini-cell" contenteditable>每天 2-3 X 貼文</div><div class="mini-cell" contenteditable>每月免費模板換 Email</div>
         <div class="mini-cell" contenteditable>小紅書 15 篇爆款</div><div class="mini-cell mini-center" contenteditable>建 5 萬人名單</div>
-        <div class="mini-cell" contenteditable>50 篇 SEO 文</div><div class="mini-cell" contenteditable>每月直播教學</div>
-        <div class="mini-cell" contenteditable>30 個 Podcast</div><div class="mini-cell" contenteditable>備用</div>
+        <div class="mini-cell" contenteditable>50 篇 SEO 文</div><div class="mini-cell" contenteditable>每月直播教學</div><div class="mini-cell" contenteditable>30 個 Podcast</div><div class="mini-cell" contenteditable>備用</div>
       </div></div>
       <div class="big-cell"><div class="big-title" contenteditable>產品開發流程</div><div class="mini-grid">
         <div class="mini-cell" contenteditable>V0 + Cursor + Claude</div><div class="mini-cell" contenteditable>每支 ≤7 天完成</div><div class="mini-cell" contenteditable>自建 Component Library</div>
         <div class="mini-cell" contenteditable>3 種風格變體</div><div class="mini-cell mini-center" contenteditable>附 30-60 分鐘教學影片</div>
-        <div class="mini-cell" contenteditable>Figma + Notion 手冊</div><div class="mini-cell" contenteditable>90 天退款</div>
-        <div class="mini-cell" contenteditable>終身更新</div><div class="mini-cell" contenteditable>備用</div>
+        <div class="mini-cell" contenteditable>Figma + Notion 手冊</div><div class="mini-cell" contenteditable>90 天退款</div><div class="mini-cell" contenteditable>終身更新</div><div class="mini-cell" contenteditable>備用</div>
       </div></div>
       <div class="big-cell"><div class="big-title" contenteditable>未來擴展</div><div class="mini-grid">
         <div class="mini-cell" contenteditable>開設模板學校</div><div class="mini-cell" contenteditable>推出英文版</div><div class="mini-cell" contenteditable>Gumroad Top 100</div>
@@ -190,415 +117,124 @@
 </div>
 
 <div class="toolbar">
-  <button class="btn" onclick="toggleDark()">深色</button>
-  <button class="btn" onclick="saveAll()">儲存</button>
+  <button class="btn" onclick="toggleDark()">深色模式</button>
+  <button class="btn" onclick="saveAll()">儲存進度</button>
   <button class="btn" onclick="exportPNG()">匯出 PNG</button>
   <button class="btn" onclick="exportExcel()">匯出 Excel</button>
-  <button class="btn" onclick="renameCurrentTab()">改分頁名稱</button>
 </div>
 
-<div id="addNewTabModal" class="modal-overlay" onclick="closeModalIfOutside(event)">
-  <div class="modal-content">
-    <h3 id="modalTitle">新增分頁 (曼陀羅)</h3>
-    <input type="hidden" id="modalTargetProjectId">
-
-    <label for="newTabNameInput">分頁名稱：</label>
-    <input type="text" id="newTabNameInput" placeholder="請輸入分頁名稱" value="新分頁">
-
-    <div class="modal-actions">
-      <button class="confirm-btn" onclick="confirmAddNewTabFromModal()">確定新增</button>
-      <button class="cancel-btn" onclick="document.getElementById('addNewTabModal').style.display='none'">取消</button>
-    </div>
-  </div>
-</div>
-
-<div id="editProjectModal" class="modal-overlay" onclick="closeModalIfOutside(event)">
-  <div class="modal-content">
-    <h3>編輯計畫</h3>
-    <input type="hidden" id="editingProjectId">
-    <label for="editProjectName">計畫名稱：</label>
-    <input type="text" id="editProjectName" placeholder="請輸入計畫名稱">
-
-    <div class="modal-actions">
-      <button class="confirm-btn" onclick="confirmEditProject()">儲存修改</button>
-      <button class="cancel-btn" onclick="deleteProject()">刪除計畫 (含所有分頁)</button>
-    </div>
-    <p style="font-size:0.9em;color:var(--project-color);margin-top:15px;">刪除計畫將同時刪除其下的所有分頁</p>
-  </div>
-</div>
-
+<style>
+.mandala-title{width:100%;text-align:center;font-size:2.3em;border:none;background:transparent;color:var(--accent);font-weight:700;margin:10px 0;}
+.mandala-subtitle{width:100%;text-align:center;font-size:1.4em;border:none;background:transparent;color:#a89b92;margin-bottom:20px;}
+.mandala-title:focus, .mandala-subtitle:focus{outline:2px solid var(--accent);border-radius:8px;}
+</style>
 
 <script>
-let projectData = {};
-let nextTabId = 2;
-let nextProjectId = 2;
+let nextMandalaId = 2;
 
 window.onload = () => {
-  const saved = localStorage.getItem('mandalaData');
-  const savedProjects = localStorage.getItem('projectData');
-  
-  if (saved && savedProjects && confirm('偵測到上次儲存，是否載入？\n\n確定 → 載入所有計畫與分頁\n取消 → 全部重置為預設')) {
-    document.getElementById('mandala-content-container').innerHTML = saved;
-    projectData = JSON.parse(savedProjects);
-    nextTabId = Math.max(...document.querySelectorAll('.super-mandala').length > 0 ? Array.from(document.querySelectorAll('.super-mandala')).map(el => parseInt(el.id.replace('tab', ''))) : [0]) + 1;
-    nextProjectId = Math.max(...Object.keys(projectData).map(key => parseInt(key.replace('project', '')))) + 1;
+  const saved = localStorage.getItem('mandalaVerticalData');
+  if (saved && confirm('偵測到上次儲存的資料，是否載入？\n\n確定 → 載入所有曼陀羅表格\n取消 → 從頭開始')) {
+    document.getElementById('mandala-container').innerHTML = saved;
   } else {
-    localStorage.removeItem('mandalaData');
-    projectData = {
-      'project1': {
-        name: '財務與業務',
-        tabs: [
-          { id: 'tab1', name: '財富自由' },
-        ]
-      }
-    };
-    localStorage.setItem('projectData', JSON.stringify(projectData));
+    localStorage.removeItem('mandalaVerticalData');
   }
-
   if(localStorage.getItem('darkMode')==='true') document.body.classList.add('dark');
-  renderTabs();
-  bindAllEvents();
+  bindDeleteButtons();
 };
 
-function closeModalIfOutside(event) {
-    if (event.target.classList.contains('modal-overlay')) {
-        event.target.style.display = 'none';
-    }
-}
-
-function renderTabs() {
-  const tabsContainer = document.getElementById('project-list');
-  tabsContainer.innerHTML = '';
-  let firstTabClicked = false;
-
-  for (const projectId in projectData) {
-    const project = projectData[projectId];
-    const projectGroup = document.createElement('div');
-    projectGroup.className = 'project-group';
-    projectGroup.setAttribute('data-project-id', projectId);
-
-    projectGroup.innerHTML = `
-      <div class="project-name">
-        ${project.name}
-        <span class="edit-project-btn" onclick="event.stopPropagation(); showEditProjectModal('${projectId}')">⚙️ 編輯</span>
-      </div>
-      <div class="tab-list" id="tab-list-${projectId}"></div>
-    `;
-    tabsContainer.appendChild(projectGroup);
-
-    const tabList = projectGroup.querySelector('.tab-list');
-    project.tabs.forEach((tab, index) => {
-      const tabElement = document.createElement('div');
-      tabElement.className = 'tab';
-      tabElement.setAttribute('data-tab', tab.id);
-      tabElement.setAttribute('data-project-id', projectId);
-      tabElement.textContent = tab.name;
-      tabList.appendChild(tabElement);
-      
-      if (!firstTabClicked && document.getElementById(tab.id)) {
-        tabElement.classList.add('active');
-        document.getElementById(tab.id).classList.add('active');
-        firstTabClicked = true;
+function bindDeleteButtons() {
+  document.querySelectorAll('.delete-super').forEach(btn => {
+    btn.onclick = function() {
+      if (confirm('確定要刪除這個完整的曼 9×9×9 曼陀羅表格嗎？')) {
+        this.parentElement.remove();
+        saveAll();
       }
-    });
-
-    const addTabButton = document.createElement('div');
-    addTabButton.className = 'tab add-tab-project'; 
-    addTabButton.textContent = '＋ 新增分頁';
-    addTabButton.onclick = function(e) { 
-        e.stopPropagation(); 
-        showAddNewTabModal(projectId, project.name); 
-    };
-    tabList.appendChild(addTabButton);
-  }
-
-  bindAllEvents();
-  setupSortable();
-}
-
-function setupSortable() {
-    // 1. 計畫排序 (Project Sort)
-    new Sortable(document.getElementById('project-list'), {
-        animation: 150,
-        handle: '.project-name',
-        draggable: '.project-group',
-        delay: 50, 
-        touchStartThreshold: 5,
-        onEnd: function (evt) {
-            const newProjectOrder = Array.from(evt.to.children).map(el => el.getAttribute('data-project-id'));
-            const newProjectData = {};
-            newProjectOrder.forEach(id => {
-                if (projectData[id]) {
-                    newProjectData[id] = projectData[id];
-                }
-            });
-            projectData = newProjectData;
-            saveAll();
-        },
-    });
-
-    // 2. 分頁排序 (Tab Sort)
-    document.querySelectorAll('.tab-list').forEach(tabList => {
-        const projectId = tabList.id.replace('tab-list-', '');
-        new Sortable(tabList, {
-            group: 'tabs',
-            animation: 150,
-            draggable: '.tab',
-            filter: '.add-tab-project', 
-            delay: 50, 
-            touchStartThreshold: 5,
-            onEnd: function (evt) {
-                const sourceProjectId = evt.from.id.replace('tab-list-', '');
-                const targetProjectId = evt.to.id.replace('tab-list-', '');
-                const tabId = evt.item.getAttribute('data-tab');
-                
-                const tabToMove = projectData[sourceProjectId].tabs.find(t => t.id === tabId);
-                
-                projectData[sourceProjectId].tabs = projectData[sourceProjectId].tabs.filter(t => t.id !== tabId);
-
-                const targetTabs = Array.from(evt.to.children)
-                    .filter(el => el.classList.contains('tab') && !el.classList.contains('add-tab-project'))
-                    .map(el => el.getAttribute('data-tab'));
-
-                const newTargetTabs = [];
-                targetTabs.forEach(id => {
-                    if (id === tabId) {
-                        newTargetTabs.push(tabToMove);
-                    } else {
-                        const existingTab = projectData[targetProjectId].tabs.find(t => t.id === id);
-                        if (existingTab) {
-                            newTargetTabs.push(existingTab);
-                        }
-                    }
-                });
-                projectData[targetProjectId].tabs = newTargetTabs;
-
-                document.getElementById(tabId).setAttribute('data-project-id', targetProjectId);
-                evt.item.setAttribute('data-project-id', targetProjectId);
-                
-                saveAll();
-            },
-        });
-    });
-}
-
-
-function bindAllEvents(){
-  document.querySelectorAll('.tab:not(.add-tab-project):not(.add-project-btn)').forEach(tab => {
-    tab.onclick = function(){
-      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-      document.querySelectorAll('.super-mandala').forEach(m=>m.classList.remove('active'));
-      this.classList.add('active');
-      const id = this.getAttribute('data-tab');
-      document.getElementById(id)?.classList.add('active');
     };
   });
-  rebindDeleteButtons();
 }
 
-function showAddNewTabModal(projectId, projectName) {
-    const modal = document.getElementById('addNewTabModal');
-    document.getElementById('modalTargetProjectId').value = projectId;
-    document.getElementById('modalTitle').textContent = `新增分頁到「${projectName}」`;
-    document.getElementById('newTabNameInput').value = `新計畫分頁 ${nextTabId}`;
-    modal.style.display = 'flex';
-    document.getElementById('newTabNameInput').focus();
-}
-
-function addNewTab(){
-  if (Object.keys(projectData).length > 0) {
-    const firstProjectId = Object.keys(projectData)[0];
-    const firstProjectName = projectData[firstProjectId].name;
-    showAddNewTabModal(firstProjectId, firstProjectName);
-  } else {
-    alert('請先點擊「新增計畫」建立一個計畫！');
-  }
-}
-
-function confirmAddNewTabFromModal(){
-    const finalName = document.getElementById('newTabNameInput').value.trim();
-    const finalProjectId = document.getElementById('modalTargetProjectId').value;
-    
-    if(!finalName) {
-        alert('分頁名稱不能為空。');
-        return;
-    }
-    
-    document.getElementById('addNewTabModal').style.display = 'none';
-    addNewMandalaPage(finalProjectId, finalName);
-}
-
-function addNewMandalaPage(finalProjectId, finalName) {
-  const newId = 'tab' + nextTabId++;
+function addNewMandala() {
+  const container = document.getElementById('mandala-container');
+  const newMandala = document.createElement('div');
+  newMandala.className = 'super-mandala';
+  newMandala.setAttribute('data-id', 'mandala' + nextMandalaId++);
   
-  projectData[finalProjectId].tabs.push({ id: newId, name: finalName });
-
-  const page = document.createElement('div');
-  page.id = newId;
-  page.className = 'super-mandala';
-  page.setAttribute('data-project-id', finalProjectId); 
-  page.innerHTML = `
+  newMandala.innerHTML = `
     <button class="delete-super">×</button>
-    <input type="text" value="${finalName}" style="width:100%;text-align:center;font-size:2.3em;border:none;background:transparent;color:var(--accent);font-weight:700;margin-bottom:10px;">
-    <input type="text" value="副標題（可留空）" style="width:100%;text-align:center;font-size:1.4em;border:none;background:transparent;color:#a89b92;">
+    <input type="text" class="mandala-title" value="新曼陀羅目標 - ${new Date().toLocaleDateString('zh-TW')}">
+    <input type="text" class="mandala-subtitle" value="點擊這裡修改副標題" placeholder="副標題（可選）">
     <div class="big-grid">
-      ${Array.from({length:9},(_,i)=> i===4 ? `
-        <div class="big-cell center-big"><div contenteditable>2025<br>核心目標</div></div>` : `
-        <div class="big-cell">
-          <div class="big-title" contenteditable>大標題</div>
+      ${Array.from({length:9}, (_, i) => i === 4 ? 
+        `<div class="big-cell center-big"><div contenteditable>2025<br>核心目標</div></div>` :
+        `<div class="big-cell">
+          <div class="big-title" contenteditable>大項目標題 ${i<4 ? i+1 : i>4 ? i : ''}</div>
           <div class="mini-grid">
-            ${Array(9).fill().map((_,j)=>`<div class="mini-cell${j===4?' mini-center':''}" contenteditable></div>`).join('')}
+            ${Array(9).fill().map((_, j) => 
+              `<div class="mini-cell${j===4 ? ' mini-center' : ''}" contenteditable></div>`
+            ).join('')}
           </div>
         </div>`
       ).join('')}
-    </div>`;
-  document.getElementById('mandala-content-container').appendChild(page);
-
-  renderTabs();
-  
-  const newTabElement = document.querySelector(`.tab[data-tab="${newId}"]`);
-  if (newTabElement) {
-    newTabElement.click();
-  }
-  
+    </div>
+  `;
+  container.appendChild(newMandala);
+  bindDeleteButtons();
   saveAll();
-}
-
-function addNewProject(){
-    const name = prompt('請輸入新計畫名稱：', '新計畫 ' + nextProjectId);
-    if(!name) return;
-    
-    const newProjectId = 'project' + nextProjectId++;
-    projectData[newProjectId] = {
-        name: name,
-        tabs: []
-    };
-    renderTabs();
-    saveAll();
-}
-
-function showEditProjectModal(projectId){
-    const project = projectData[projectId];
-    document.getElementById('editingProjectId').value = projectId;
-    document.getElementById('editProjectName').value = project.name;
-    document.getElementById('editProjectModal').style.display = 'flex';
-}
-
-function confirmEditProject(){
-    const projectId = document.getElementById('editingProjectId').value;
-    const newName = document.getElementById('editProjectName').value.trim();
-    
-    if(newName){
-        projectData[projectId].name = newName;
-        renderTabs();
-        document.getElementById('editProjectModal').style.display = 'none';
-        saveAll();
-    } else {
-        alert('計畫名稱不能為空');
-    }
-}
-
-function deleteProject(){
-    if(!confirm('確定要刪除此計畫及其下的所有分頁嗎？')) return;
-    
-    const projectId = document.getElementById('editingProjectId').value;
-    const tabsToDelete = projectData[projectId].tabs.map(t => t.id);
-    
-    tabsToDelete.forEach(id => {
-        document.getElementById(id)?.remove();
-    });
-    
-    delete projectData[projectId];
-    
-    renderTabs();
-    document.getElementById('editProjectModal').style.display = 'none';
-
-    document.querySelector('.tab')?.click();
-    
-    saveAll();
-}
-
-function rebindDeleteButtons(){
-  document.querySelectorAll('.delete-super').forEach(b=>b.onclick=function(){
-    if(confirm('確定刪除這整頁？')){
-      const id = this.parentElement.id; 
-      const projectId = this.parentElement.getAttribute('data-project-id'); 
-      
-      document.getElementById(id).remove();
-      
-      if(projectData[projectId]){
-        projectData[projectId].tabs = projectData[projectId].tabs.filter(t => t.id !== id);
-      }
-      
-      renderTabs();
-      
-      document.querySelector('.tab')?.click();
-
-      saveAll();
-    }
-  });
-}
-
-function renameCurrentTab(){
-  const tab = document.querySelector('.tab.active');
-  if(!tab || tab.classList.contains('add-tab-project') || tab.classList.contains('add-project-btn')) return;
   
-  const oldName = tab.textContent;
-  const newName = prompt('新分頁名稱：', oldName);
-  
-  if(newName && newName.trim()){
-    const tabId = tab.getAttribute('data-tab');
-    const projectId = tab.getAttribute('data-project-id');
-
-    const tabToUpdate = projectData[projectId]?.tabs.find(t => t.id === tabId);
-    if(tabToUpdate){
-        tabToUpdate.name = newName;
-    }
-    
-    tab.textContent = newName;
-    document.querySelector('.super-mandala.active input[type="text"]:first-of-type').value = newName;
-    
-    saveAll();
-  }
+  // 自動滾動到新表格
+  newMandala.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-function saveAll(){ 
-  localStorage.setItem('mandalaData', document.getElementById('mandala-content-container').innerHTML);
-  localStorage.setItem('projectData', JSON.stringify(projectData)); 
+function saveAll() {
+  localStorage.setItem('mandalaVerticalData', document.getElementById('mandala-container').innerHTML);
 }
-function toggleDark(){
+
+function toggleDark() {
   document.body.classList.toggle('dark');
   localStorage.setItem('darkMode', document.body.classList.contains('dark'));
 }
-async function exportPNG(){
-  for(let page of document.querySelectorAll('.super-mandala')){
-    const c = await html2canvas(page,{scale:1.8});
+
+async function exportPNG() {
+  for (let page of document.querySelectorAll('.super-mandala')) {
+    const title = page.querySelector('.mandala-title').value.trim() || '曼陀羅';
+    const canvas = await html2canvas(page, { scale: 1.8, useCORS: true });
     const a = document.createElement('a');
-    a.download = (page.querySelector('input')?.value||'曼陀羅')+'.png';
-    a.href = c.toDataURL(); a.click();
-    await new Promise(r=>setTimeout(r,400));
+    a.download = title + '.png';
+    a.href = canvas.toDataURL();
+    a.click();
+    await new Promise(r => setTimeout(r, 500));
   }
 }
-function exportExcel(){
+
+function exportExcel() {
   const wb = XLSX.utils.book_new();
-  document.querySelectorAll('.super-mandala').forEach((p,i)=>{
-    const data = [[p.querySelector('input')?.value || '分頁'+(i+1)],[]];
-    p.querySelectorAll('.big-cell').forEach(b=>{
-      const title = b.querySelector('.big-title')?.innerText || b.querySelector('[contenteditable]')?.innerText || '';
-      data.push([title]); 
-      b.querySelectorAll('.mini-cell').forEach((m,j)=>{ if(j%3===0) data.push([]);
-        data[data.length-1].push(m.innerText.trim()||'');
-      });
+  document.querySelectorAll('.super-mandala').forEach((page, idx) => {
+    const title = page.querySelector('.mandala-title')?.value || `曼陀羅${idx + 1}`;
+    const data = [[title], [page.querySelector('.mandala-subtitle')?.value || ''], []];
+    
+    page.querySelectorAll('.big-cell').forEach(cell => {
+      const bigTitle = cell.querySelector('.big-title, [contenteditable]')?.innerText || '';
+      if (bigTitle) data.push([bigTitle]);
+      
+      const miniCells = cell.querySelectorAll('.mini-cell');
+      for (let i = 0; i < miniCells.length; i += 3) {
+        data.push([
+          miniCells[i]?.innerText.trim() || '',
+          miniCells[i+1]?.innerText.trim() || '',
+          miniCells[i+2]?.innerText.trim() || ''
+        ]);
+      }
       data.push([]);
     });
+    
     const ws = XLSX.utils.aoa_to_sheet(data);
-    ws['!cols'] = Array(3).fill({wch:28});
-    XLSX.utils.book_append_sheet(wb, ws, (p.querySelector('input')?.value||'分頁'+(i+1)).slice(0,31));
+    ws['!cols'] = [{wch:30}, {wch:30}, {wch:30}];
+    XLSX.utils.book_append_sheet(wb, ws, title.substring(0, 31));
   });
-  XLSX.writeFile(wb,'2025全部分頁曼陀羅_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  
+  XLSX.writeFile(wb, '2025_全曼陀羅匯出_' + new Date().toISOString().slice(0,10) + '.xlsx');
 }
-
-renderTabs();
 </script>
 </body>
 </html>

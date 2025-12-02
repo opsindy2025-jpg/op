@@ -2,139 +2,169 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>2025 曼陀羅計畫</title>
-<!-- 關鍵：讓手機可以自由縮放 + 橫向滾動 -->
+<title>2025 超級曼陀羅 - 多頁分類宇宙計畫 (計畫版)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <style>
-  :root{--bg:#faf8f5;--card:#fffdf9;--text:#5d5d5d;--accent:#b8a89f;--shadow:rgba(180,160,140,0.18);}
-  body.dark{--bg:#1a1a1a;--card:#252525;--text:#e8e8e8;--accent:#d8c9c0;--shadow:rgba(0,0,0,0.5);}
-  body{
-    margin:0;padding:20px 20px 140px;
-    background:var(--bg);color:var(--text);
-    font-family:"Noto Sans TC",sans-serif;
-    transition:all .4s;
-    /* 關鍵：允許橫向滾動 */
-    overflow-x:auto;
-    overflow-y:auto;
-  }
-  h1{text-align:center;color:var(--accent);margin:30px 0 10px;font-size:2.4em;}
+  :root{--bg:#faf8f5;--card:#fffdf9;--text:#5d5d5d;--accent:#b8a89f;--shadow:rgba(180,160,140,0.18);--project-color:#6c757d;}
+  body.dark{--bg:#1a1a1a;--card:#252525;--text:#e8e8e8;--accent:#d8c9c0;--shadow:rgba(0,0,0,0.5);--project-color:#ced4da;}
+  body{margin:0;padding:20px 20px 160px;background:var(--bg);color:var(--text);
+       font-family:"Noto Sans TC",sans-serif;overflow-x:auto;overflow-y:auto;min-height:100vh;}
+  h1{text-align:center;color:var(--accent);font-size:2.6em;margin:20px 0 10px;}
 
-  /* 讓整組曼陀羅永遠保持 3×3，不會因手機變形 */
-  .mandala-wrapper{
-    width:1100px;
-    max-width:none !important;
-    margin:0 auto;
-    padding:20px 0;
+  /* [修改] 標籤列結構 */
+  .tabs{
+    display:flex;flex-direction:column;gap:15px;justify-content:center;margin:30px 0 50px;
+    padding:0 20px;max-width:100%;
   }
-  .mandala-set{
-    position:relative;
-    width:1100px;
-    margin:80px auto;
-    background:var(--card);
-    padding:50px;
-    border-radius:32px;
-    box-shadow:0 20px 60px var(--shadow);
+  .project-group{
+    padding:10px 0;border:1px solid rgba(0,0,0,0.05);border-radius:12px;
+    background:rgba(255,255,255,0.8);box-shadow:0 8px 25px var(--shadow);
+    max-width:1000px;margin:0 auto;
   }
-
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:28px;
-    margin-top:30px;
-  }
-  .cell{
-    background:var(--card);
-    border-radius:24px;
-    padding:32px;
-    min-height:190px;
-    box-shadow:0 8px 30px var(--shadow);
-    transition:all .3s;
-  }
-  .cell:hover{transform:translateY(-8px);}
-
-  .center{
-    background:linear-gradient(135deg,#f5e8e1,#e8f0f5);
-    color:#8b7a6e;
-    font-size:2em !important;
-    font-weight:700;
+  .dark .project-group{background:rgba(0,0,0,0.2);}
+  .project-name{
     display:flex;align-items:center;justify-content:center;
-    text-align:center;line-height:1.4;
-    min-height:240px !important;
+    padding:5px 20px;font-size:1.3em;font-weight:700;color:var(--project-color);
+    cursor:move; /* 可拖曳標示 */
   }
-  .dark .center{background:linear-gradient(135deg,#3a2f2f,#2f3a4a);color:#f0d8c0;}
+  .project-name:hover{color:var(--accent);}
+  .tab-list{
+    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:10px 20px;
+  }
+  .tab{
+    padding:10px 20px;background:var(--card);color:var(--text);border:2px solid transparent;
+    border-radius:30px;cursor:move; /* 可拖曳標示 */
+    font-weight:500;box-shadow:0 4px 12px var(--shadow);
+    transition:all .3s;min-width:100px;text-align:center;flex-shrink:0;
+  }
+  .tab.active{background:var(--accent);color:#fff;transform:scale(1.05);cursor:default;}
+  .tab:hover:not(.active){background:rgba(184,168,159,0.2);}
+  /* [修改] 調整新增分頁按鈕樣式 */
+  .tab.add-tab-project{
+    background:#4caf50 !important;color:#fff !important;cursor:pointer;
+    padding:10px 20px;font-weight:600;
+  }
+  /* [新增] 新增計畫按鈕 */
+  .add-project-btn{
+    margin:15px auto 0;
+    padding:10px 20px;background:#2196f3 !important;color:#fff !important;border-radius:30px;
+    cursor:pointer;font-weight:600;box-shadow:0 4px 12px var(--shadow);
+  }
 
-  .single-content{
-    margin-top:20px;font-size:1.08em;line-height:1.9;
-    padding:16px;background:rgba(184,168,159,0.1);border-radius:16px;
-  }
-  .dark .single-content{background:rgba(216,201,192,0.16);}
+  /* 其餘樣式保持不變 */
+  .super-mandala{display:none;width:1480px;margin:0 auto 120px;padding:40px;background:var(--card);
+    border-radius:32px;box-shadow:0 30px 80px var(--shadow);position:relative;}
+  .super-mandala.active{display:block;}
+  .delete-super{position:absolute;top:16px;right:16px;width:44px;height:44px;
+    background:#e85d75;color:#fff;border:none;border-radius:50%;font-size:26px;cursor:pointer;z-index:10;}
+  .big-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;}
+  .big-cell{background:linear-gradient(135deg,#f9f5f2,#f0f8ff);border-radius:28px;padding:24px;
+    box-shadow:0 12px 40px var(--shadow);}
+  .dark .big-cell{background:linear-gradient(135deg,#2a2426,#1e2a38);}
+  .big-title{text-align:center;font-size:1.5em;font-weight:700;color:var(--accent);
+    margin-bottom:16px;padding:8px;background:rgba(184,168,159,0.15);border-radius:16px;}
+  .center-big{background:linear-gradient(135deg,#ffe8e1,#e1f0ff)!important;
+    font-size:2.2em!important;color:#8b6f5e;display:flex;align-items:center;justify-content:center;
+    text-align:center;line-height:1.4;padding:40px!important;}
+  .dark .center-big{background:linear-gradient(135deg,#3f2f38,#2f3a4a)!important;color:#f0d8c0;}
+  .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;}
+  .mini-cell{background:rgba(255,255,255,0.75);border-radius:12px;padding:12px 10px;
+    font-size:0.92em;line-height:1.5;min-height:68px;box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    transition:all .3s;}
+  .dark .mini-cell{background:rgba(0,0,0,0.4);}
+  .mini-cell:hover{transform:translateY(-4px);}
+  .mini-center{background:linear-gradient(135deg,#ffe0d8,#d8e8ff)!important;
+    font-weight:700;font-size:1.1em!important;}
+  .dark .mini-center{background:linear-gradient(135deg,#4a2f3a,#2f3a4a)!important;color:#f0d8c0;}
+  .toolbar{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);
+    background:var(--card);padding:12px 22px;border-radius:50px;
+    box-shadow:0 12px 40px var(--shadow);z-index:999;display:flex;gap:14px;}
+  .btn{padding:12px 24px;background:var(--accent);color:#fff;border:none;
+       border-radius:30px;cursor:pointer;font-size:15px;}
+  [contenteditable]:focus{outline:2px solid var(--accent);background:rgba(184,168,159,0.15);}
 
-  .delete-btn{
-    position:absolute;top:16px;right:16px;width:42px;height:42px;
-    background:#e85d75;color:#fff;border:none;border-radius:50%;
-    font-size:24px;cursor:pointer;opacity:0.9;z-index:10;
+  /* 彈窗樣式保持不變 */
+  .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);
+    display:none;align-items:center;justify-content:center;z-index:1000;}
+  .modal-content{background:var(--card);padding:30px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.3);
+    width:90%;max-width:400px;text-align:center;}
+  .modal-content h3{color:var(--accent);margin-top:0;}
+  .modal-content select, .modal-content input[type="text"]{
+    width:100%;padding:10px;margin-bottom:15px;border:1px solid var(--accent);
+    border-radius:8px;box-sizing:border-box;background:var(--bg);color:var(--text);
   }
-  .delete-btn:hover{opacity:1;transform:scale(1.2);}
-
-  .add-btn{
-    position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
-    padding:16px 48px;background:var(--accent);color:#fff;
-    border:none;border-radius:50px;font-size:1.3em;font-weight:600;
-    box-shadow:0 10px 30px rgba(184,168,159,0.5);z-index:99;
-    cursor:pointer;
-  }
-
-  .toolbar{
-    position:fixed;bottom:15px;left:50%;transform:translateX(-50%);
-    background:var(--card);padding:12px 20px;border-radius:50px;
-    box-shadow:0 10px 30px var(--shadow);z-index:999;
-    display:flex;gap:14px;flex-wrap:nowrap;
-  }
-  .btn{padding:12px 22px;background:var(--accent);color:#fff;border:none;
-       border-radius:30px;cursor:pointer;font-size:15px;white-space:nowrap;}
-  [contenteditable]:focus{outline:3px solid var(--accent);}
+  .modal-actions{display:flex;justify-content:space-around;margin-top:20px;}
+  .modal-actions button{flex-grow:1;margin:0 5px;padding:10px;border-radius:8px;font-weight:600;}
+  .modal-actions .confirm-btn{background:#4CAF50;color:white;border:none;}
+  .modal-actions .cancel-btn{background:#e85d75;color:white;border:none;}
 </style>
 </head>
 <body>
 
-<h1>2025 曼陀羅計畫</h1>
+<h1>2025 超級曼陀羅 - 多頁分類宇宙計畫 (計畫版)</h1>
 
-<button class="add-btn" onclick="addNewMandala()">＋ 新增一組曼陀羅</button>
+<div class="tabs" id="project-list">
+  </div>
+<div class="tabs">
+    <div class="tab add-project-btn" onclick="addNewProject()">＋ 新增計畫</div>
+</div>
 
-<!-- 預設範例（固定寬度 1100px，手機可縮放拖拉） -->
-<div class="mandala-wrapper">
-  <div class="mandala-set">
-    <button class="delete-btn">×</button>
-    <input type="text" value="2025 模板被動收入 500 萬" style="width:100%;text-align:center;font-size:2.1em;border:none;background:transparent;color:var(--accent);font-weight:700;">
-    <input type="text" value="躺著也能財富自由" style="width:100%;text-align:center;font-size:1.4em;border:none;background:transparent;color:#a89b92;margin:12px 0 30px;">
+<div id="mandala-content-container">
+  <div id="tab1" class="super-mandala active" data-project-id="project1">
+    <button class="delete-super">×</button>
+    <input type="text" value="2025 模板被動收入 500 萬 - 宇宙版" style="width:100%;text-align:center;font-size:2.3em;border:none;background:transparent;color:var(--accent);font-weight:700;margin-bottom:10px;">
+    <input type="text" value="躺著也能財富自由（81 格全開！）" style="width:100%;text-align:center;font-size:1.4em;border:none;background:transparent;color:#a89b92;">
 
-    <div class="grid">
-      <div class="cell" data-label="H"><div contenteditable>里程碑與生活平衡</div><div class="single-content" contenteditable>Q1 月收 20 萬 → Q2 50 萬 → Q3 80 萬 → Q4 穩定 100 萬+
-每天只工作 4-5 小時 ⋅ 每週 3 天完全離線 ⋅ 每季出國一個月</div></div>
-
-      <div class="cell" data-label="B"><div contenteditable>產品線規劃</div><div class="single-content" contenteditable>• Next.js 企業官網模板
-• Framer 高轉換 Landing Page
-• SaaS 完整網站模板
-• Notion 人生系統模板
-• 3D 沉浸式作品集等 8+ 條產品線</div></div>
-
-      <div class="cell" data-label="C"><div contenteditable>銷售平台與通路</div><div class="single-content" contenteditable>Gumroad（主戰場）+ Lemon Squeezy + 自架網站 + Envato + 小紅書 + 微信視頻號 + 聯盟行銷 30-50% 分成</div></div>
-
-      <div class="cell" data-label="G"><div contenteditable>自動化與團隊外包</div><div class="single-content" contenteditable>ChatGPT 客服自動化 ⋅ 影片剪輯外包 ⋅ 設計外包（菲律賓/印尼）⋅ Notion+Make 自動化 ⋅ 年底招 1 位全職助手</div></div>
-
-      <div class="cell center" data-label="A">
-        <div contenteditable style="font-size:2.1em;line-height:1.4;">2025 年<br>純模板被動收入<br>500 萬</div>
+    <div class="big-grid">
+      <div class="big-cell"><div class="big-title" contenteditable>里程碑與生活平衡</div><div class="mini-grid">
+        <div class="mini-cell" contenteditable>Q1 20萬</div><div class="mini-cell" contenteditable>Q2 50萬</div><div class="mini-cell" contenteditable>Q3 80萬</div>
+        <div class="mini-cell" contenteditable>Q4 100萬+</div><div class="mini-cell mini-center" contenteditable>每天只工作 4-5 小時</div>
+        <div class="mini-cell" contenteditable>每週 3 天完全離線</div><div class="mini-cell" contenteditable>每季出國一個月</div><div class="mini-cell" contenteditable>2025/12/31 慶功</div><div class="mini-cell" contenteditable>備用</div>
+      </div></div>
+      <div class="big-cell"><div class="big-title" contenteditable>產品線規劃</div><div class="mini-grid">
+        <div class="mini-cell" contenteditable>Next.js 企業官網</div><div class="mini-cell" contenteditable>Framer 高轉換 LP</div><div class="mini-cell" contenteditable>SaaS 完整網站</div>
+        <div class="mini-cell" contenteditable>電商模板</div><div class="mini-cell mini-center" contenteditable>每月推 2 個付費模板</div>
+        <div class="mini-cell" contenteditable>Notion 系統</div><div class="mini-cell" contenteditable>3D 沉浸式作品集</div><div class="mini-cell" contenteditable>Shadcn 套件</div><div class="mini-cell" contenteditable>Webflow 模板</div>
+      </div></div>
+      <div class="big-cell"><div class="big-title" contenteditable>銷售平台與通路</div><div class="mini-grid">
+        <div class="mini-cell" contenteditable>Gumroad 主戰場</div><div class="mini-cell" contenteditable>Lemon Squeezy</div><div class="mini-cell" contenteditable>自架網站</div>
+        <div class="mini-cell" contenteditable>Envato</div><div class="mini-cell mini-center" contenteditable>聯盟行銷 30-50%</div>
+        <div class="mini-cell" contenteditable>小紅書數位店</div><div class="mini-cell" contenteditable>微信視頻號</div><div class="mini-cell" contenteditable>X 直達車</div><div class="mini-cell" contenteditable>備用平台</div>
+      </div></div>
+      <div class="big-cell"><div class="big-title" contenteditable>自動化與團隊</div><div class="mini-grid">
+        <div class="mini-cell" contenteditable>ChatGPT 客服</div><div class="mini-cell" contenteditable>影片剪輯外包</div><div class="mini-cell" contenteditable>設計外包</div>
+        <div class="mini-cell" contenteditable>自動報表</div><div class="mini-cell mini-center" contenteditable>年底招全職助手</div>
+        <div class="mini-cell" contenteditable>SOP 完整化</div><div class="mini-cell" contenteditable>稅務自動化</div><div class="mini-cell" contenteditable>聯盟追蹤</div><div class="mini-cell" contenteditable>備用</div>
+      </div></div>
+      <div class="big-cell center-big">
+        <div contenteditable>2025 年<br>純模板被動收入<br>500 萬</div>
       </div>
-
-      <div class="cell" data-label="D"><div contenteditable>價格與收入結構</div><div class="single-content" contenteditable>高階 $199-$499 ⋅ 中階 $79-$149 ⋅ Notion $29-$79 ⋅ 訂閱 $39/月 ⋅ 終身會員 $999 ⋅ 企業授權 $1999-$4999 ⋅ 聯盟分潤 80-100 萬</div></div>
-
-      <div class="cell" data-label="I"><div contenteditable>內容行銷引擎</div><div class="single-content" contenteditable>每週 1 支 YouTube ⋅ 每天 2-3 則 X ⋅ 每月 1 個免費模板換 Email ⋅ 建 5 萬人名單 ⋅ 50 篇 SEO 文 ⋅ 每月直播教學</div></div>
-
-      <div class="cell" data-label="E"><div contenteditable>產品開發流程與速度</div><div class="single-content" contenteditable>每月 2 個付費模板 ⋅ V0+Cursor+Claude 極速產出 ⋅ ≤7 天一支 ⋅ 附教學影片+Figma+Notion 手冊 ⋅ 90 天退款+終身更新</div></div>
-
-      <div class="cell" data-label="F"><div contenteditable>備用／未來擴展</div><div class="single-content" contenteditable>開設模板訂閱學校 ⋅ 推出英文版 ⋅ 進軍 Gumroad Top 100 ⋅ 更多瘋狂想法…</div></div>
+      <div class="big-cell"><div class="big-title" contenteditable>價格與收入結構</div><div class="mini-grid">
+        <div class="mini-cell" contenteditable>高階 $199-$499</div><div class="mini-cell" contenteditable>中階 $79-$149</div><div class="mini-cell" contenteditable>Notion $29-$79</div>
+        <div class="mini-cell" contenteditable>訂閱 $39/月</div><div class="mini-cell mini-center" contenteditable>終身會員 $999</div>
+        <div class="mini-cell" contenteditable>企業授權 $1999+</div><div class="mini-cell" contenteditable>Bundle $299-$599</div>
+        <div class="mini-cell" contenteditable>聯盟分潤 80-100萬</div><div class="mini-cell" contenteditable>備用</div>
+      </div></div>
+      <div class="big-cell"><div class="big-title" contenteditable>內容行銷引擎</div><div class="mini-grid">
+        <div class="mini-cell" contenteditable>每週 1 支 YouTube</div><div class="mini-cell" contenteditable>每天 2-3 X 貼文</div><div class="mini-cell" contenteditable>每月免費模板換 Email</div>
+        <div class="mini-cell" contenteditable>小紅書 15 篇爆款</div><div class="mini-cell mini-center" contenteditable>建 5 萬人名單</div>
+        <div class="mini-cell" contenteditable>50 篇 SEO 文</div><div class="mini-cell" contenteditable>每月直播教學</div>
+        <div class="mini-cell" contenteditable>30 個 Podcast</div><div class="mini-cell" contenteditable>備用</div>
+      </div></div>
+      <div class="big-cell"><div class="big-title" contenteditable>產品開發流程</div><div class="mini-grid">
+        <div class="mini-cell" contenteditable>V0 + Cursor + Claude</div><div class="mini-cell" contenteditable>每支 ≤7 天完成</div><div class="mini-cell" contenteditable>自建 Component Library</div>
+        <div class="mini-cell" contenteditable>3 種風格變體</div><div class="mini-cell mini-center" contenteditable>附 30-60 分鐘教學影片</div>
+        <div class="mini-cell" contenteditable>Figma + Notion 手冊</div><div class="mini-cell" contenteditable>90 天退款</div>
+        <div class="mini-cell" contenteditable>終身更新</div><div class="mini-cell" contenteditable>備用</div>
+      </div></div>
+      <div class="big-cell"><div class="big-title" contenteditable>未來擴展</div><div class="mini-grid">
+        <div class="mini-cell" contenteditable>開設模板學校</div><div class="mini-cell" contenteditable>推出英文版</div><div class="mini-cell" contenteditable>Gumroad Top 100</div>
+        <div class="mini-cell" contenteditable>進軍企業市場</div><div class="mini-cell mini-center" contenteditable>更多瘋狂想法…</div>
+        <div class="mini-cell" contenteditable></div><div class="mini-cell" contenteditable></div><div class="mini-cell" contenteditable></div><div class="mini-cell" contenteditable></div>
+      </div></div>
     </div>
   </div>
 </div>
@@ -144,96 +174,434 @@
   <button class="btn" onclick="saveAll()">儲存</button>
   <button class="btn" onclick="exportPNG()">匯出 PNG</button>
   <button class="btn" onclick="exportExcel()">匯出 Excel</button>
+  <button class="btn" onclick="renameCurrentTab()">改分頁名稱</button>
 </div>
 
+<div id="addNewTabModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>新增分頁 (曼陀羅)</h3>
+    <label for="newTabName">分頁名稱：</label>
+    <input type="text" id="newTabName" placeholder="請輸入分頁名稱" value="新分頁">
+
+    <p style="font-size:0.9em;color:#e85d75;">請注意：此為通用新增，新分頁將會被歸類到第一個計畫。</p>
+
+    <div class="modal-actions">
+      <button class="confirm-btn" onclick="confirmAddNewTab(null)">確定新增</button>
+      <button class="cancel-btn" onclick="document.getElementById('addNewTabModal').style.display='none'">取消</button>
+    </div>
+  </div>
+</div>
+<div id="editProjectModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>編輯計畫</h3>
+    <input type="hidden" id="editingProjectId">
+    <label for="editProjectName">計畫名稱：</label>
+    <input type="text" id="editProjectName" placeholder="請輸入計畫名稱">
+
+    <div class="modal-actions">
+      <button class="confirm-btn" onclick="confirmEditProject()">儲存修改</button>
+      <button class="cancel-btn" onclick="deleteProject()">刪除計畫 (含所有分頁)</button>
+    </div>
+    <p style="font-size:0.9em;color:var(--project-color);margin-top:15px;">刪除計畫將同時刪除其下的所有分頁</p>
+  </div>
+</div>
+
+
 <script>
-// 載入邏輯：第一次開一定看得到預設範例
-function loadSavedOrDefault() {
-  const saved = localStorage.getItem('mandalaData');
-  if (saved && saved.includes('mandala-set') && confirm('載入上次儲存的計畫？（否則保留預設範例）')) {
-    document.documentElement.innerHTML = saved;
-    rebindEvents();
-  }
-}
+let projectData = {};
+let nextTabId = 2;
+let nextProjectId = 2;
+
 window.onload = () => {
-  loadSavedOrDefault();
-  rebindEvents();
+  const saved = localStorage.getItem('mandalaData');
+  const savedProjects = localStorage.getItem('projectData');
+  
+  if (saved && savedProjects && confirm('偵測到上次儲存，是否載入？\n\n確定 → 載入所有計畫與分頁\n取消 → 全部重置為預設')) {
+    document.getElementById('mandala-content-container').innerHTML = saved;
+    projectData = JSON.parse(savedProjects);
+    // 重新計算 ID 確保新增時不重複
+    nextTabId = Math.max(...document.querySelectorAll('.super-mandala').length > 0 ? Array.from(document.querySelectorAll('.super-mandala')).map(el => parseInt(el.id.replace('tab', ''))) : [0]) + 1;
+    nextProjectId = Math.max(...Object.keys(projectData).map(key => parseInt(key.replace('project', '')))) + 1;
+  } else {
+    localStorage.removeItem('mandalaData');
+    // [修改] 預設資料
+    projectData = {
+      'project1': {
+        name: '財務與業務',
+        tabs: [
+          { id: 'tab1', name: '財富自由' },
+        ]
+      }
+    };
+    localStorage.setItem('projectData', JSON.stringify(projectData));
+  }
+
   if(localStorage.getItem('darkMode')==='true') document.body.classList.add('dark');
+  renderTabs();
+  bindAllEvents();
 };
 
-function saveAll(){
-  localStorage.setItem('mandalaData', document.documentElement.outerHTML);
-  alert('已儲存！');
+// [修改] 渲染計畫和分頁結構
+function renderTabs() {
+  const tabsContainer = document.getElementById('project-list');
+  tabsContainer.innerHTML = '';
+  let firstTabClicked = false;
+
+  for (const projectId in projectData) {
+    const project = projectData[projectId];
+    const projectGroup = document.createElement('div');
+    projectGroup.className = 'project-group';
+    projectGroup.setAttribute('data-project-id', projectId);
+
+    projectGroup.innerHTML = `
+      <div class="project-name">
+        ${project.name}
+        <span class="edit-project-btn" onclick="event.stopPropagation(); showEditProjectModal('${projectId}')">⚙️ 編輯</span>
+      </div>
+      <div class="tab-list" id="tab-list-${projectId}"></div>
+    `;
+    tabsContainer.appendChild(projectGroup);
+
+    const tabList = projectGroup.querySelector('.tab-list');
+    project.tabs.forEach((tab, index) => {
+      const tabElement = document.createElement('div');
+      tabElement.className = 'tab';
+      tabElement.setAttribute('data-tab', tab.id);
+      tabElement.setAttribute('data-project-id', projectId);
+      tabElement.textContent = tab.name;
+      tabList.appendChild(tabElement);
+      
+      if (!firstTabClicked && document.getElementById(tab.id)) {
+        tabElement.classList.add('active');
+        document.getElementById(tab.id).classList.add('active');
+        firstTabClicked = true;
+      }
+    });
+
+    // [新增] 在每個計畫的標籤列表末端新增「新增分頁」按鈕
+    const addTabButton = document.createElement('div');
+    addTabButton.className = 'tab add-tab-project'; // 專門的 class
+    addTabButton.textContent = '＋ 新增分頁';
+    // 直接將 targetProjectId 傳遞給 addNewTabInProject 函式
+    addTabButton.onclick = function() { addNewTabInProject(projectId); };
+    tabList.appendChild(addTabButton);
+  }
+
+  bindAllEvents();
+  setupSortable();
+}
+
+function setupSortable() {
+    // 1. 計畫排序 (Project Sort)
+    new Sortable(document.getElementById('project-list'), {
+        animation: 150,
+        handle: '.project-name',
+        draggable: '.project-group',
+        onEnd: function (evt) {
+            const newProjectOrder = Array.from(evt.to.children).map(el => el.getAttribute('data-project-id'));
+            const newProjectData = {};
+            newProjectOrder.forEach(id => {
+                if (projectData[id]) {
+                    newProjectData[id] = projectData[id];
+                }
+            });
+            projectData = newProjectData;
+            saveAll();
+        },
+    });
+
+    // 2. 分頁排序 (Tab Sort)
+    document.querySelectorAll('.tab-list').forEach(tabList => {
+        const projectId = tabList.id.replace('tab-list-', '');
+        new Sortable(tabList, {
+            group: 'tabs',
+            animation: 150,
+            draggable: '.tab',
+            filter: '.add-tab-project', // [修改] 排除新增按鈕
+            onEnd: function (evt) {
+                const sourceProjectId = evt.from.id.replace('tab-list-', '');
+                const targetProjectId = evt.to.id.replace('tab-list-', '');
+                const tabId = evt.item.getAttribute('data-tab');
+                
+                const tabToMove = projectData[sourceProjectId].tabs.find(t => t.id === tabId);
+                
+                // 移除原分頁
+                projectData[sourceProjectId].tabs = projectData[sourceProjectId].tabs.filter(t => t.id !== tabId);
+
+                // 準備目標分頁列表
+                const targetTabs = Array.from(evt.to.children)
+                    .filter(el => el.classList.contains('tab') && !el.classList.contains('add-tab-project'))
+                    .map(el => el.getAttribute('data-tab'));
+
+                const newTargetTabs = [];
+                targetTabs.forEach(id => {
+                    if (id === tabId) {
+                        newTargetTabs.push(tabToMove);
+                    } else {
+                        const existingTab = projectData[targetProjectId].tabs.find(t => t.id === id);
+                        if (existingTab) {
+                            newTargetTabs.push(existingTab);
+                        }
+                    }
+                });
+                projectData[targetProjectId].tabs = newTargetTabs;
+
+                document.getElementById(tabId).setAttribute('data-project-id', targetProjectId);
+                evt.item.setAttribute('data-project-id', targetProjectId);
+                
+                saveAll();
+            },
+        });
+    });
+}
+
+
+function bindAllEvents(){
+  // 標籤切換
+  document.querySelectorAll('.tab:not(.add-tab-project):not(.add-project-btn)').forEach(tab => {
+    tab.onclick = function(){
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.super-mandala').forEach(m=>m.classList.remove('active'));
+      this.classList.add('active');
+      const id = this.getAttribute('data-tab');
+      document.getElementById(id)?.classList.add('active');
+    };
+  });
+  rebindDeleteButtons();
+}
+
+// [修改/新增] 通用新增分頁（使用彈窗） - 優先新增到第一個計畫
+function addNewTab(){
+  // 如果有計畫，彈出通用彈窗
+  if (Object.keys(projectData).length > 0) {
+    document.getElementById('addNewTabModal').style.display = 'flex';
+  } else {
+    alert('請先點擊「新增計畫」建立一個計畫！');
+  }
+}
+
+// [新增] 在特定計畫內新增分頁 (不使用彈窗)
+function addNewTabInProject(targetProjectId) {
+    const name = prompt('請輸入新分頁名稱：', '新計畫分頁 ' + nextTabId) || '未命名分頁';
+
+    if (name) {
+        confirmAddNewTab(targetProjectId, name);
+    }
+}
+
+
+// [修改] 確認新增分頁的核心邏輯 (處理兩種情境: 1. 計畫內新增 2. 通用新增)
+function confirmAddNewTab(targetProjectId = null, name = null){
+  let finalName = name;
+  let finalProjectId = targetProjectId;
+
+  if (finalProjectId === null) {
+      // 來自通用彈窗
+      finalName = document.getElementById('newTabName').value.trim() || '未命名分頁';
+      finalProjectId = Object.keys(projectData)[0]; // 預設新增到第一個計畫
+      document.getElementById('addNewTabModal').style.display = 'none';
+  }
+
+  if(!finalProjectId) {
+    // 理論上不會發生，除非刪光所有計畫
+    alert('沒有可用的計畫來存放新的分頁。');
+    return;
+  }
+  
+  const newId = 'tab' + nextTabId++;
+  
+  // 1. 新增分頁到 projectData
+  projectData[finalProjectId].tabs.push({ id: newId, name: finalName });
+
+  // 2. 新增空白頁面 (Super Mandala)
+  const page = document.createElement('div');
+  page.id = newId;
+  page.className = 'super-mandala';
+  page.setAttribute('data-project-id', finalProjectId); // 標註所屬計畫
+  page.innerHTML = `
+    <button class="delete-super">×</button>
+    <input type="text" value="${finalName}" style="width:100%;text-align:center;font-size:2.3em;border:none;background:transparent;color:var(--accent);font-weight:700;margin-bottom:10px;">
+    <input type="text" value="副標題（可留空）" style="width:100%;text-align:center;font-size:1.4em;border:none;background:transparent;color:#a89b92;">
+    <div class="big-grid">
+      ${Array.from({length:9},(_,i)=> i===4 ? `
+        <div class="big-cell center-big"><div contenteditable>2025<br>核心目標</div></div>` : `
+        <div class="big-cell">
+          <div class="big-title" contenteditable>大標題</div>
+          <div class="mini-grid">
+            ${Array(9).fill().map((_,j)=>`<div class="mini-cell${j===4?' mini-center':''}" contenteditable></div>`).join('')}
+          </div>
+        </div>`
+      ).join('')}
+    </div>`;
+  document.getElementById('mandala-content-container').appendChild(page);
+
+  // 3. 重新渲染標籤列並切換到新頁
+  renderTabs();
+  
+  // 4. 切換到新頁
+  const newTabElement = document.querySelector(`.tab[data-tab="${newId}"]`);
+  if (newTabElement) {
+    newTabElement.click();
+  }
+  
+  saveAll();
+}
+
+// [新增] 新增計畫 (保持不變)
+function addNewProject(){
+    const name = prompt('請輸入新計畫名稱：', '新計畫 ' + nextProjectId) || '未命名計畫';
+    if(!name) return;
+    
+    const newProjectId = 'project' + nextProjectId++;
+    projectData[newProjectId] = {
+        name: name,
+        tabs: []
+    };
+    renderTabs();
+    saveAll();
+}
+
+// [新增] 顯示編輯/刪除計畫彈窗 (保持不變)
+function showEditProjectModal(projectId){
+    const project = projectData[projectId];
+    document.getElementById('editingProjectId').value = projectId;
+    document.getElementById('editProjectName').value = project.name;
+    document.getElementById('editProjectModal').style.display = 'flex';
+}
+
+// [新增] 確認編輯計畫名稱 (保持不變)
+function confirmEditProject(){
+    const projectId = document.getElementById('editingProjectId').value;
+    const newName = document.getElementById('editProjectName').value.trim();
+    
+    if(newName){
+        projectData[projectId].name = newName;
+        renderTabs();
+        document.getElementById('editProjectModal').style.display = 'none';
+        saveAll();
+    } else {
+        alert('計畫名稱不能為空');
+    }
+}
+
+// [新增] 刪除計畫 (保持不變)
+function deleteProject(){
+    if(!confirm('確定要刪除此計畫及其下的所有分頁嗎？')) return;
+    
+    const projectId = document.getElementById('editingProjectId').value;
+    const tabsToDelete = projectData[projectId].tabs.map(t => t.id);
+    
+    // 1. 刪除所有分頁內容
+    tabsToDelete.forEach(id => {
+        document.getElementById(id)?.remove();
+    });
+    
+    // 2. 刪除 projectData 中的計畫
+    delete projectData[projectId];
+    
+    // 3. 重新渲染標籤列
+    renderTabs();
+    document.getElementById('editProjectModal').style.display = 'none';
+
+    // 4. 預設切換到第一個分頁
+    document.querySelector('.tab')?.click();
+    
+    saveAll();
+}
+
+// [修改] 刪除分頁 (保持不變)
+function rebindDeleteButtons(){
+  document.querySelectorAll('.delete-super').forEach(b=>b.onclick=function(){
+    if(confirm('確定刪除這整頁？')){
+      const id = this.parentElement.id; // tabID
+      const projectId = this.parentElement.getAttribute('data-project-id'); // projectID
+      
+      // 1. 刪除分頁內容
+      document.getElementById(id).remove();
+      
+      // 2. 更新 projectData
+      if(projectData[projectId]){
+        projectData[projectId].tabs = projectData[projectId].tabs.filter(t => t.id !== id);
+      }
+      
+      // 3. 重新渲染標籤列 (確保按鈕被移除)
+      renderTabs();
+      
+      // 4. 預設切換到第一個分頁
+      document.querySelector('.tab')?.click();
+
+      saveAll();
+    }
+  });
+}
+
+function renameCurrentTab(){
+  const tab = document.querySelector('.tab.active');
+  if(!tab || tab.classList.contains('add-tab-project') || tab.classList.contains('add-project-btn')) return;
+  
+  const oldName = tab.textContent;
+  const newName = prompt('新分頁名稱：', oldName);
+  
+  if(newName && newName.trim()){
+    const tabId = tab.getAttribute('data-tab');
+    const projectId = tab.getAttribute('data-project-id');
+
+    // 1. 更新 projectData 裡的名稱
+    const tabToUpdate = projectData[projectId]?.tabs.find(t => t.id === tabId);
+    if(tabToUpdate){
+        tabToUpdate.name = newName;
+    }
+    
+    // 2. 更新 DOM 上的名稱
+    tab.textContent = newName;
+    document.querySelector('.super-mandala.active input[type="text"]:first-of-type').value = newName;
+    
+    saveAll();
+  }
+}
+
+// 儲存、深色模式、匯出功能保持不變
+function saveAll(){ 
+  localStorage.setItem('mandalaData', document.getElementById('mandala-content-container').innerHTML);
+  localStorage.setItem('projectData', JSON.stringify(projectData)); 
 }
 function toggleDark(){
   document.body.classList.toggle('dark');
   localStorage.setItem('darkMode', document.body.classList.contains('dark'));
 }
 async function exportPNG(){
-  const sets = document.querySelectorAll('.mandala-set');
-  for(let i=0; i<sets.length; i++){
-    const canvas = await html2canvas(sets[i], {scale:2});
-    const link = document.createElement('a');
-    link.download = (sets[i].querySelector('input')?.value || '曼陀羅'+(i+1))+'.png';
-    link.href = canvas.toDataURL();
-    link.click();
-    await new Promise(r=>setTimeout(r,300));
+  for(let page of document.querySelectorAll('.super-mandala')){
+    const c = await html2canvas(page,{scale:1.8});
+    const a = document.createElement('a');
+    a.download = (page.querySelector('input')?.value||'曼陀羅')+'.png';
+    a.href = c.toDataURL(); a.click();
+    await new Promise(r=>setTimeout(r,400));
   }
 }
 function exportExcel(){
   const wb = XLSX.utils.book_new();
-  document.querySelectorAll('.mandala-set').forEach((set,i)=>{
-    const title = set.querySelector('input')?.value || '曼陀羅'+(i+1);
-    const data = [['位置','標題','內容']];
-    set.querySelectorAll('.cell').forEach(cell=>{
-      const label = cell.dataset.label || '';
-      if(!label) return;
-      const main = cell.querySelector('[contenteditable]:not(.single-content)')?.innerText || '';
-      const content = cell.querySelector('.single-content')?.innerText || '';
-      data.push([label, main, content]);
+  document.querySelectorAll('.super-mandala').forEach((p,i)=>{
+    const data = [[p.querySelector('input')?.value || '分頁'+(i+1)],[]];
+    p.querySelectorAll('.big-cell').forEach(b=>{
+      const title = b.querySelector('.big-title')?.innerText || b.querySelector('[contenteditable]')?.innerText || '';
+      data.push([title]); 
+      b.querySelectorAll('.mini-cell').forEach((m,j)=>{ if(j%3===0) data.push([]);
+        data[data.length-1].push(m.innerText.trim()||'');
+      });
+      data.push([]);
     });
     const ws = XLSX.utils.aoa_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, title.slice(0,31));
+    ws['!cols'] = Array(3).fill({wch:28});
+    XLSX.utils.book_append_sheet(wb, ws, (p.querySelector('input')?.value||'分頁'+(i+1)).slice(0,31));
   });
-  XLSX.writeFile(wb, '曼陀羅計畫表_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  XLSX.writeFile(wb,'2025全部分頁曼陀羅_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
-function rebindEvents(){
-  document.querySelectorAll('.delete-btn').forEach(btn=>{
-    btn.onclick = function(){
-      if(confirm('確定刪除這組曼陀羅？')){
-        this.parentElement.parentElement.remove(); // 因為有 .mandala-wrapper
-        saveAll();
-      }
-    };
-  });
-}
-function addNewMandala(){
-  const blank = `<div class="mandala-wrapper">...（跟上面一樣結構的空白曼陀羅）...</div>`;
-  // 直接插入到 body 最下面
-  document.body.insertAdjacentHTML('beforeend', 
-    `<div class="mandala-wrapper">
-      <div class="mandala-set">
-        <button class="delete-btn">×</button>
-        <input type="text" value="我的新目標" style="width:100%;text-align:center;font-size:2.1em;border:none;background:transparent;color:var(--accent);font-weight:700;">
-        <input type="text" value="" placeholder="副標題（可留空）" style="width:100%;text-align:center;font-size:1.4em;border:none;background:transparent;color:#a89b92;margin:12px 0 30px;">
-        <div class="grid">
-          <div class="cell" data-label="H"><div contenteditable>請填入標題</div><div class="single-content" contenteditable>請在這裡輸入詳細內容…</div></div>
-          <div class="cell" data-label="B"><div contenteditable>請填入標題</div><div class="single-content" contenteditable>請在這裡輸入詳細內容…</div></div>
-          <div class="cell" data-label="C"><div contenteditable>請填入標題</div><div class="single-content" contenteditable>請在這裡輸入詳細內容…</div></div>
-          <div class="cell" data-label="G"><div contenteditable>請填入標題</div><div class="single-content" contenteditable>請在這裡輸入詳細內容…</div></div>
-          <div class="cell center" data-label="A"><div contenteditable style="font-size:2.1em;line-height:1.4;">2025 核心目標</div></div>
-          <div class="cell" data-label="D"><div contenteditable>請填入標題</div><div class="single-content" contenteditable>請在這裡輸入詳細內容…</div></div>
-          <div class="cell" data-label="I"><div contenteditable>請填入標題</div><div class="single-content" contenteditable>請在這裡輸入詳細內容…</div></div>
-          <div class="cell" data-label="E"><div contenteditable>請填入標題</div><div class="single-content" contenteditable>請在這裡輸入詳細內容…</div></div>
-          <div class="cell" data-label="F"><div contenteditable>請填入標題</div><div class="single-content" contenteditable>請在這裡輸入詳細內容…</div></div>
-        </div>
-      </div>
-    </div>`);
-  rebindEvents();
-  saveAll();
-  document.querySelectorAll('.mandala-wrapper')[document.querySelectorAll('.mandala-wrapper').length-1]
-    .scrollIntoView({behavior:"smooth"});
-}
+
+// [修改] 讓通用新增按鈕指向通用新增功能 (如果還存在的話，這裡已經被新的按鈕結構取代，但為保險起見保留邏輯)
+// document.querySelector('.tab.add-tab')?.setAttribute('onclick', 'addNewTab()'); 
+// 程式碼中已無 .tab.add-tab，故通用新增分頁功能已透過工具列下方的 addNewTab() 彈窗取代。
+
+renderTabs();
 </script>
 </body>
 </html>

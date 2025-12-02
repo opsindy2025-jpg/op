@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>2025 超級曼陀羅 - 左側分類版</title>
+<title>2025 超級曼陀羅 - 左側分類版 (可收合)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -17,41 +17,34 @@
     width:280px;background:var(--card);border-right:1px solid rgba(0,0,0,0.08);
     padding:20px 0;position:fixed;left:0;top:0;bottom:0;overflow-y:auto;z-index:100;
     box-shadow:2px 0 20px var(--shadow);
+    transition: transform 0.3s ease-in-out; /* 新增過渡動畫 */
   }
   .dark #sidebar{border-right-color:rgba(255,255,255,0.1);}
   #sidebar h2{font-size:1.4em;margin:0 20px 20px;color:var(--accent);font-weight:700;}
-  .category{
-    padding:10px 20px;cursor:pointer;transition:all .2s;font-weight:500;
-    display:flex;justify-content:space-between;align-items:center;
-  }
+  .category{padding:10px 20px;cursor:pointer;transition:all .2s;font-weight:500;display:flex;justify-content:space-between;align-items:center;}
   .category:hover{background:rgba(184,168,159,0.15);}
   .category.active{background:var(--accent);color:#fff;}
   .category .delete-cat{display:none;font-size:0.9em;opacity:0.7;}
   .category:hover .delete-cat{display:inline;}
   .category.active .delete-cat{display:none !important;}
-  #add-category{
-    margin:20px 20px 0;padding:12px;background:#4caf50;color:#fff;border-radius:12px;
-    text-align:center;cursor:pointer;font-weight:600;
-  }
+  #add-category{margin:20px 20px 0;padding:12px;background:#4caf50;color:#fff;border-radius:12px;text-align:center;cursor:pointer;font-weight:600;}
 
   /* ==== 主要內容區 ==== */
-  main{flex:1;margin-left:280px;padding:30px 40px 180px;overflow-y:auto;}
+  main{
+    flex:1;
+    margin-left:280px; /* 預設側邊欄寬度 */
+    padding:30px 40px 180px;
+    overflow-y:auto;
+    transition: margin-left 0.3s ease-in-out; /* 新增過渡動畫 */
+  }
   h1{text-align:center;color:var(--accent);font-size:2.6em;margin:0 0 30px;}
 
-  .add-mandala-btn{
-    display:block;margin:30px auto;padding:16px 40px;background:#2196f3;color:#fff;border:none;
-    border-radius:30px;cursor:pointer;font-size:1.3em;font-weight:600;box-shadow:0 8px 25px var(--shadow);width:360px;
-  }
+  .add-mandala-btn{display:block;margin:30px auto;padding:16px 40px;background:#2196f3;color:#fff;border:none;border-radius:30px;cursor:pointer;font-size:1.3em;font-weight:600;box-shadow:0 8px 25px var(--shadow);width:360px;}
 
-  .super-mandala{
-    width:1480px;max-width:96vw;margin:60px auto;padding:40px;background:var(--card);
-    border-radius:32px;box-shadow:0 30px 80px var(--shadow);position:relative;display:none;
-  }
+  /* 曼陀羅內容樣式（保持不變） */
+  .super-mandala{width:1480px;max-width:96vw;margin:60px auto;padding:40px;background:var(--card);border-radius:32px;box-shadow:0 30px 80px var(--shadow);position:relative;display:none;}
   .super-mandala.visible{display:block;}
-  .delete-super{position:absolute;top:16px;right:16px;width:44px;height:44px;
-    background:#e85d75;color:#fff;border:none;border-radius:50%;font-size:26px;cursor:pointer;z-index:10;}
-
-  /* 曼陀羅內部樣式（與之前完全相同） */
+  .delete-super{position:absolute;top:16px;right:16px;width:44px;height:44px;background:#e85d75;color:#fff;border:none;border-radius:50%;font-size:26px;cursor:pointer;z-index:10;}
   .mandala-title{width:100%;text-align:center;font-size:2.3em;border:none;background:transparent;color:var(--accent);font-weight:700;margin:10px 0;}
   .mandala-subtitle{width:100%;text-align:center;font-size:1.4em;border:none;background:transparent;color:#a89b92;margin-bottom:20px;}
   .mandala-title:focus,.mandala-subtitle:focus{outline:2px solid var(--accent);border-radius:8px;}
@@ -67,6 +60,73 @@
   .mini-cell:hover{transform:translateY(-4px);}
   .mini-center{background:linear-gradient(135deg,#ffe0d8,#d8e8ff)!important;font-weight:700;font-size:1.1em!important;}
   .dark .mini-center{background:linear-gradient(135deg,#4a2f3a,#2f3a4a)!important;color:#f0d8c0;}
+  
+  /* ==== 側邊欄收起狀態 ==== */
+  #sidebar.sidebar-hidden{
+    transform: translateX(-100%); /* 完全隱藏 */
+    box-shadow: none;
+  }
+  main.sidebar-hidden{
+    margin-left: 0; /* 主內容佔滿全寬 */
+  }
+
+  /* ==== 側邊欄切換按鈕 ==== */
+  #sidebar-toggle-btn{
+    position: fixed;
+    left: 280px; /* 預設在側邊欄邊緣 */
+    top: 20px;
+    width: 40px;
+    height: 40px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 40px;
+    text-align: center;
+    box-shadow: 2px 0 10px var(--shadow);
+    z-index: 101;
+    transition: left 0.3s ease-in-out;
+  }
+  #sidebar-toggle-btn.sidebar-hidden{
+    left: 0; /* 收起時按鈕移到最左邊 */
+  }
+
+  /* 調整手機/平板螢幕下的預設行為 */
+  @media (max-width: 1200px) {
+    #sidebar{
+      transform: translateX(-100%); /* 預設隱藏 */
+    }
+    main{
+      margin-left: 0; /* 預設全寬 */
+    }
+    #sidebar-toggle-btn{
+      left: 0; /* 預設顯示在最左邊 */
+      border-radius: 0 8px 8px 0;
+    }
+
+    #sidebar.visible-on-mobile{
+        transform: translateX(0); /* 點擊後展開 */
+        box-shadow: 2px 0 20px rgba(0,0,0,0.4);
+    }
+    main.sidebar-visible-on-mobile{
+        /* 避免內容被按鈕遮擋，可根據需求調整 */
+        margin-left: 0; 
+    }
+    #sidebar-toggle-btn.visible-on-mobile{
+        left: 280px; /* 展開後按鈕移到側邊欄邊緣 */
+        content: '－';
+        border-radius: 8px 0 0 8px;
+    }
+    
+    /* 確保工具列在小螢幕上不會太寬 */
+    .toolbar{
+        width: 90%;
+        box-sizing: border-box;
+    }
+  }
+
 
   .toolbar{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:var(--card);padding:12px 22px;border-radius:50px;box-shadow:0 12px 40px var(--shadow);z-index:999;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
   .btn{padding:12px 24px;background:var(--accent);color:#fff;border:none;border-radius:30px;cursor:pointer;font-size:15px;}
@@ -75,28 +135,25 @@
 </head>
 <body>
 
-<!-- 左側分類欄 -->
+<button id="sidebar-toggle-btn" onclick="toggleSidebar()">＋</button>
+
 <div id="sidebar">
   <h2>分類</h2>
   <div id="category-list">
-    <!-- 動態生成 -->
-  </div>
+    </div>
   <div id="add-category">＋ 新增分類</div>
 </div>
 
-<!-- 主要內容 -->
 <main>
   <h1>2025 超級曼陀羅 - 分類宇宙計畫</h1>
   <div class="add-mandala-btn" onclick="addNewMandala()">＋ 新增曼陀羅表格</div>
 
   <div id="mandala-container">
-    <!-- 預設第一個範例 -->
     <div class="super-mandala visible" data-category="財務與業務" data-id="m1">
       <button class="delete-super">×</button>
       <input type="text" class="mandala-title" value="2025 模板被動收入 500 萬 - 宇宙版">
       <input type="text" class="mandala-subtitle" value="躺著也能財富自由（81 格全開！）">
       <div class="big-grid">
-        <!-- 原有 9×9×9 內容完全保留 -->
         <div class="big-cell"><div class="big-title" contenteditable>里程碑與生活平衡</div><div class="mini-grid">
           <div class="mini-cell" contenteditable>Q1 20萬</div><div class="mini-cell" contenteditable>Q2 50萬</div><div class="mini-cell" contenteditable>Q3 80萬</div>
           <div class="mini-cell" contenteditable>Q4 100萬+</div><div class="mini-cell mini-center" contenteditable>每天只工作 4-5 小時</div>
@@ -155,6 +212,49 @@ let categories = ['全部', '財務與業務', '健康與生活', '學習成長'
 let currentCategory = '全部';
 let nextId = 2;
 
+// [新增] 檢查是否為行動裝置
+function isMobileView() {
+    return window.matchMedia("(max-width: 1200px)").matches;
+}
+
+// [新增] 側邊欄切換功能
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.querySelector('main');
+    const toggleBtn = document.getElementById('sidebar-toggle-btn');
+    
+    // 判斷當前狀態
+    const isHidden = isMobileView() ? 
+        !sidebar.classList.contains('visible-on-mobile') : 
+        sidebar.classList.contains('sidebar-hidden');
+
+    if (isHidden) {
+        // 展開
+        if (isMobileView()) {
+            sidebar.classList.add('visible-on-mobile');
+            mainContent.classList.add('sidebar-visible-on-mobile');
+            toggleBtn.classList.add('visible-on-mobile');
+        } else {
+            sidebar.classList.remove('sidebar-hidden');
+            mainContent.classList.remove('sidebar-hidden');
+            toggleBtn.classList.remove('sidebar-hidden');
+        }
+        toggleBtn.textContent = '－';
+    } else {
+        // 收起
+        if (isMobileView()) {
+            sidebar.classList.remove('visible-on-mobile');
+            mainContent.classList.remove('sidebar-visible-on-mobile');
+            toggleBtn.classList.remove('visible-on-mobile');
+        } else {
+            sidebar.classList.add('sidebar-hidden');
+            mainContent.classList.add('sidebar-hidden');
+            toggleBtn.classList.add('sidebar-hidden');
+        }
+        toggleBtn.textContent = '＋';
+    }
+}
+
 // 載入資料
 window.onload = () => {
   const saved = localStorage.getItem('mandalaCategoriesData');
@@ -165,10 +265,34 @@ window.onload = () => {
     document.getElementById('mandala-container').innerHTML = saved;
     categories = JSON.parse(savedCat);
     currentCategory = savedCurrent || '全部';
+    
+    // 重新計算 nextId
+    const maxId = Array.from(document.querySelectorAll('.super-mandala')).reduce((max, el) => {
+        const id = parseInt(el.getAttribute('data-id')?.replace('m', '')) || 0; // 增加?.和預設值
+        return id > max ? id : max;
+    }, 1);
+    nextId = maxId + 1;
+    
   } else {
     localStorage.clear();
   }
+  
   if(localStorage.getItem('darkMode')==='true') document.body.classList.add('dark');
+  
+  // [新增] 根據裝置類型，設定初始收起狀態
+  if (isMobileView()) {
+      // 在手機上，讓側邊欄預設收起 (CSS 已經處理)
+      document.getElementById('sidebar-toggle-btn').textContent = '＋';
+  } else if (localStorage.getItem('sidebarState') === 'hidden') {
+      // 在 PC 上，如果上次是收起狀態，則恢復
+      document.getElementById('sidebar').classList.add('sidebar-hidden');
+      document.querySelector('main').classList.add('sidebar-hidden');
+      document.getElementById('sidebar-toggle-btn').classList.add('sidebar-hidden');
+      document.getElementById('sidebar-toggle-btn').textContent = '＋';
+  } else {
+      document.getElementById('sidebar-toggle-btn').textContent = '－';
+  }
+
   renderCategories();
   filterMandala();
   bindDeleteButtons();
@@ -184,7 +308,7 @@ function renderCategories() {
     if (cat === currentCategory) div.classList.add('active');
     div.innerHTML = `
       <span onclick="switchCategory('${cat}')">${cat === '全部' ? '全部' : cat}</span>
-      ${cat !== '全部' ? `<span class="delete-cat" onclick="deleteCategory('${cat}')">×</span>` : ''}
+      ${cat !== '全部' ? `<span class="delete-cat" onclick="event.stopPropagation(); deleteCategory('${cat}')">×</span>` : ''}
     `;
     list.appendChild(div);
   });
@@ -194,6 +318,7 @@ function switchCategory(cat) {
   currentCategory = cat;
   renderCategories();
   filterMandala();
+  saveAll();
 }
 
 function filterMandala() {
@@ -222,6 +347,10 @@ function deleteCategory(name) {
     document.querySelectorAll(`.super-mandala[data-category="${name}"]`).forEach(m => {
       m.setAttribute('data-category', '全部');
     });
+    // 如果刪除的是當前分類，則切換到「全部」
+    if (currentCategory === name) {
+        currentCategory = '全部';
+    }
     renderCategories();
     filterMandala();
     saveAll();
@@ -234,9 +363,8 @@ function addNewMandala() {
   div.className = 'super-mandala visible';
   div.setAttribute('data-id', 'm' + nextId++);
   div.setAttribute('data-category', currentCategory === '全部' ? '財務與業務' : currentCategory);
-  div.innerHTML = `...（同樣的 9×9×9 結構，為了篇幅這裡省略，實際會完整貼上）...`;
-  // 實際完整 HTML 請直接複製上面範例那個 <div class="super-mandala"> 的內部結構
-  // 這裡為了可讀性先省略，實際使用請貼完整 9×9×9
+  
+  // 為了節省篇幅，這裡使用完整的範例 HTML 結構
   div.innerHTML = `
     <button class="delete-super">×</button>
     <input type="text" class="mandala-title" value="新曼陀羅 - ${new Date().toLocaleDateString('zh-TW')}">
@@ -268,6 +396,7 @@ function bindDeleteButtons() {
 function setupDragAndDrop() {
   new Sortable(document.getElementById('mandala-container'), {
     animation: 150,
+    filter: ':not(.visible)', /* 確保只對顯示中的頁面進行拖曳 */
     onEnd: saveAll
   });
 }
@@ -276,6 +405,15 @@ function saveAll() {
   localStorage.setItem('mandalaCategoriesData', document.getElementById('mandala-container').innerHTML);
   localStorage.setItem('mandalaCategoriesList', JSON.stringify(categories));
   localStorage.setItem('mandalaCurrentCategory', currentCategory);
+  
+  // [新增] 儲存側邊欄狀態
+  const sidebar = document.getElementById('sidebar');
+  if (!isMobileView()) {
+    localStorage.setItem('sidebarState', sidebar.classList.contains('sidebar-hidden') ? 'hidden' : 'visible');
+  } else {
+    // 手機狀態不儲存，每次載入都預設收起
+    localStorage.removeItem('sidebarState');
+  }
 }
 
 function toggleDark() {
@@ -283,33 +421,101 @@ function toggleDark() {
   localStorage.setItem('darkMode', document.body.classList.contains('dark'));
 }
 
-async function exportPNG() { /* 同之前 */ 
+async function exportPNG() {
   for(let page of document.querySelectorAll('.super-mandala.visible')){
-    const title = page.querySelector('.mandala-title').value || '曼陀羅';
+    // 臨時隱藏刪除按鈕
+    const deleteBtn = page.querySelector('.delete-super');
+    if (deleteBtn) deleteBtn.style.display = 'none';
+
+    const title = page.querySelector('.mandala-title')?.value || '曼陀羅';
     const c = await html2canvas(page,{scale:1.8});
     const a = document.createElement('a');
     a.download = title + '.png';
     a.href = c.toDataURL(); a.click();
+    
+    // 恢復刪除按鈕
+    if (deleteBtn) deleteBtn.style.display = 'block';
+
     await new Promise(r=>setTimeout(r,400));
   }
 }
 
-function exportExcel() { /* 同之前，略 */ 
+/**
+ * 【修復】匯出 Excel 函數
+ * 確保從可編輯欄位中正確提取內容，並只匯出當前可見的頁面。
+ */
+function exportExcel() {
   const wb = XLSX.utils.book_new();
-  document.querySelectorAll('.super-mandala.visible').forEach((p,i)=>{
-    const title = p.querySelector('.mandala-title')?.value || '曼陀羅'+(i+1);
-    const data = [[title],[p.querySelector('.mandala-subtitle')?.value||''],[]];
-    p.querySelectorAll('.big-cell').forEach(b=>{
-      const t = b.querySelector('.big-title,[contenteditable]')?.innerText||'';
-      if(t) data.push([t]);
-      b.querySelectorAll('.mini-cell').forEach((m,j)=>{ if(j%3===0) data.push([]); data[data.length-1].push(m.innerText.trim()||''); });
-      data.push([]);
+  
+  // 只選取當前可見的曼陀羅頁面
+  document.querySelectorAll('.super-mandala.visible').forEach((p, i) => {
+    // 提取標題，並將其作為 Excel 工作表的名稱 (最多 31 字)
+    const titleEl = p.querySelector('.mandala-title');
+    const subtitleEl = p.querySelector('.mandala-subtitle');
+    const sheetTitle = (titleEl?.value || `頁面${i+1}`).slice(0, 31);
+    
+    // 準備數據：第一行為主標題，第二行為副標題，空行分隔
+    let data = [
+      [titleEl?.value || `頁面${i+1}`],
+      [subtitleEl?.value || ''],
+      [] // 空行分隔
+    ];
+    
+    // 遍歷所有 9 個大區塊 (Big Cells)
+    p.querySelectorAll('.big-cell').forEach(b => {
+      // 提取大標題 (Big Title)，處理可能是 input 或 contenteditable 的情況
+      let bigTitle = '';
+      const titleElement = b.querySelector('.big-title') || b.querySelector('.center-big > div[contenteditable]');
+      if (titleElement) {
+        bigTitle = titleElement.innerText.trim();
+      }
+      
+      // 將大標題作為新的一行
+      if (bigTitle) {
+        data.push([bigTitle]);
+      } else if (b.classList.contains('center-big')) {
+        // 核心目標單獨處理
+        data.push(['核心目標']);
+      }
+      
+      // 遍歷 9 個小格子 (Mini Cells)
+      const miniCells = b.querySelectorAll('.mini-cell, .center-big > div[contenteditable]');
+      
+      // 確保從第一列開始
+      let currentRow = []; 
+      
+      miniCells.forEach((m, j) => {
+        // 提取內容
+        const cellContent = m.innerText.trim() || '';
+        
+        // 每 3 個小格子換一行
+        if (j > 0 && j % 3 === 0) {
+          data.push(currentRow);
+          currentRow = []; // 開始新的一行
+        }
+        currentRow.push(cellContent);
+      });
+      
+      // 處理最後不滿 3 個的 currentRow
+      if (currentRow.length > 0) {
+        data.push(currentRow);
+      }
+      
+      data.push([]); // 大區塊間以空行分隔
     });
+    
+    // 創建工作表
     const ws = XLSX.utils.aoa_to_sheet(data);
-    ws['!cols'] = Array(3).fill({wch:30});
-    XLSX.utils.book_append_sheet(wb, ws, title.slice(0,31));
+    
+    // 設定欄寬
+    ws['!cols'] = Array(3).fill({ wch: 30 });
+    
+    // 加入工作簿
+    XLSX.utils.book_append_sheet(wb, ws, sheetTitle);
   });
-  XLSX.writeFile(wb,'曼陀羅分類匯出_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  
+  // 寫入檔案
+  XLSX.writeFile(wb, '曼陀羅分類匯出_' + new Date().toISOString().slice(0, 10) + '.xlsx');
 }
 </script>
 </body>

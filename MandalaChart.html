@@ -14,30 +14,47 @@
        font-family:"Noto Sans TC",sans-serif;overflow-x:auto;overflow-y:auto;min-height:100vh;}
   h1{text-align:center;color:var(--accent);font-size:2.6em;margin:20px 0 10px;}
 
+  /* ------------------- [修改] 標籤列結構 ------------------- */
   .tabs{
     display:flex;flex-direction:column;gap:15px;justify-content:center;margin:30px 0 50px;
-    padding:0 20px;max-width:100%;
+    padding:0 0px; /* 移除左右 padding */
+    max-width:100%;
   }
   .project-group{
     padding:10px 0;border:1px solid rgba(0,0,0,0.05);border-radius:12px;
     background:rgba(255,255,255,0.8);box-shadow:0 8px 25px var(--shadow);
     max-width:1000px;margin:0 auto;
+    width: 100%; /* 確保在手機上撐滿寬度 */
   }
   .dark .project-group{background:rgba(0,0,0,0.2);}
   .project-name{
     display:flex;align-items:center;justify-content:center;
     padding:5px 20px;font-size:1.3em;font-weight:700;color:var(--project-color);
-    cursor:move;
+    cursor:move; 
   }
   .project-name:hover{color:var(--accent);}
+
+  /* [關鍵修改] 讓分頁列表橫向捲動 */
   .tab-list{
-    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:10px 20px;
+    display:flex; /* 保持 flex */
+    flex-wrap: nowrap; /* 確保不換行，強制橫向 */
+    gap:10px;
+    justify-content: flex-start; /* 左對齊 */
+    padding:10px 20px;
+    overflow-x: auto; /* 允許橫向捲動 */
+    -webkit-overflow-scrolling: touch; /* iOS 流暢捲動 */
+    scrollbar-width: none; /* Firefox 隱藏捲軸 */
   }
+  .tab-list::-webkit-scrollbar {
+    display: none; /* Chrome/Safari 隱藏捲軸 */
+  }
+  /* ------------------- [修改結束] ------------------- */
+
   .tab{
     padding:10px 20px;background:var(--card);color:var(--text);border:2px solid transparent;
     border-radius:30px;cursor:move;
     font-weight:500;box-shadow:0 4px 12px var(--shadow);
-    transition:all .3s;min-width:100px;text-align:center;flex-shrink:0;
+    transition:all .3s;min-width:100px;text-align:center;flex-shrink:0; /* 確保分頁不被擠壓 */
   }
   .tab.active{background:var(--accent);color:#fff;transform:scale(1.05);cursor:default;}
   .tab:hover:not(.active){background:rgba(184,168,159,0.2);}
@@ -223,12 +240,10 @@ window.onload = () => {
   if (saved && savedProjects && confirm('偵測到上次儲存，是否載入？\n\n確定 → 載入所有計畫與分頁\n取消 → 全部重置為預設')) {
     document.getElementById('mandala-content-container').innerHTML = saved;
     projectData = JSON.parse(savedProjects);
-    // 重新計算 ID 確保新增時不重複
     nextTabId = Math.max(...document.querySelectorAll('.super-mandala').length > 0 ? Array.from(document.querySelectorAll('.super-mandala')).map(el => parseInt(el.id.replace('tab', ''))) : [0]) + 1;
     nextProjectId = Math.max(...Object.keys(projectData).map(key => parseInt(key.replace('project', '')))) + 1;
   } else {
     localStorage.removeItem('mandalaData');
-    // 預設資料
     projectData = {
       'project1': {
         name: '財務與業務',
@@ -245,15 +260,12 @@ window.onload = () => {
   bindAllEvents();
 };
 
-// [新增] 關閉彈窗 (點擊灰色背景)
 function closeModalIfOutside(event) {
     if (event.target.classList.contains('modal-overlay')) {
         event.target.style.display = 'none';
     }
 }
 
-
-// [修改] 渲染計畫和分頁結構
 function renderTabs() {
   const tabsContainer = document.getElementById('project-list');
   tabsContainer.innerHTML = '';
@@ -290,13 +302,11 @@ function renderTabs() {
       }
     });
 
-    // 在每個計畫的標籤列表末端新增「新增分頁」按鈕
     const addTabButton = document.createElement('div');
     addTabButton.className = 'tab add-tab-project'; 
     addTabButton.textContent = '＋ 新增分頁';
-    // [修改] 點擊時呼叫 showAddNewTabModal
     addTabButton.onclick = function(e) { 
-        e.stopPropagation(); // 避免觸控設備上誤觸拖曳
+        e.stopPropagation(); 
         showAddNewTabModal(projectId, project.name); 
     };
     tabList.appendChild(addTabButton);
@@ -312,7 +322,6 @@ function setupSortable() {
         animation: 150,
         handle: '.project-name',
         draggable: '.project-group',
-        // [新增] 避免在手機上長按時觸發拖曳
         delay: 50, 
         touchStartThreshold: 5,
         onEnd: function (evt) {
@@ -335,8 +344,7 @@ function setupSortable() {
             group: 'tabs',
             animation: 150,
             draggable: '.tab',
-            filter: '.add-tab-project', // 排除新增按鈕
-            // [新增] 避免在手機上長按時觸發拖曳
+            filter: '.add-tab-project', 
             delay: 50, 
             touchStartThreshold: 5,
             onEnd: function (evt) {
@@ -346,10 +354,8 @@ function setupSortable() {
                 
                 const tabToMove = projectData[sourceProjectId].tabs.find(t => t.id === tabId);
                 
-                // 移除原分頁
                 projectData[sourceProjectId].tabs = projectData[sourceProjectId].tabs.filter(t => t.id !== tabId);
 
-                // 準備目標分頁列表
                 const targetTabs = Array.from(evt.to.children)
                     .filter(el => el.classList.contains('tab') && !el.classList.contains('add-tab-project'))
                     .map(el => el.getAttribute('data-tab'));
@@ -378,7 +384,6 @@ function setupSortable() {
 
 
 function bindAllEvents(){
-  // 標籤切換
   document.querySelectorAll('.tab:not(.add-tab-project):not(.add-project-btn)').forEach(tab => {
     tab.onclick = function(){
       document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -391,7 +396,6 @@ function bindAllEvents(){
   rebindDeleteButtons();
 }
 
-// [新增] 顯示新增分頁彈窗 (指定計畫)
 function showAddNewTabModal(projectId, projectName) {
     const modal = document.getElementById('addNewTabModal');
     document.getElementById('modalTargetProjectId').value = projectId;
@@ -401,7 +405,6 @@ function showAddNewTabModal(projectId, projectName) {
     document.getElementById('newTabNameInput').focus();
 }
 
-// [修改] 通用新增分頁 (給 toolbar 使用，如果沒有計畫則提示)
 function addNewTab(){
   if (Object.keys(projectData).length > 0) {
     const firstProjectId = Object.keys(projectData)[0];
@@ -412,7 +415,6 @@ function addNewTab(){
   }
 }
 
-// [新增] 從 Modal 確認新增分頁
 function confirmAddNewTabFromModal(){
     const finalName = document.getElementById('newTabNameInput').value.trim();
     const finalProjectId = document.getElementById('modalTargetProjectId').value;
@@ -423,20 +425,14 @@ function confirmAddNewTabFromModal(){
     }
     
     document.getElementById('addNewTabModal').style.display = 'none';
-
-    // 呼叫核心邏輯
     addNewMandalaPage(finalProjectId, finalName);
 }
 
-
-// [新增] 核心邏輯：新增曼陀羅頁面
 function addNewMandalaPage(finalProjectId, finalName) {
   const newId = 'tab' + nextTabId++;
   
-  // 1. 新增分頁到 projectData
   projectData[finalProjectId].tabs.push({ id: newId, name: finalName });
 
-  // 2. 新增空白頁面 (Super Mandala)
   const page = document.createElement('div');
   page.id = newId;
   page.className = 'super-mandala';
@@ -458,10 +454,8 @@ function addNewMandalaPage(finalProjectId, finalName) {
     </div>`;
   document.getElementById('mandala-content-container').appendChild(page);
 
-  // 3. 重新渲染標籤列並切換到新頁
   renderTabs();
   
-  // 4. 切換到新頁
   const newTabElement = document.querySelector(`.tab[data-tab="${newId}"]`);
   if (newTabElement) {
     newTabElement.click();
@@ -470,7 +464,6 @@ function addNewMandalaPage(finalProjectId, finalName) {
   saveAll();
 }
 
-// [修改] 新增計畫 - 替換 prompt
 function addNewProject(){
     const name = prompt('請輸入新計畫名稱：', '新計畫 ' + nextProjectId);
     if(!name) return;
@@ -484,7 +477,68 @@ function addNewProject(){
     saveAll();
 }
 
-// [修改] 重新命名分頁 - 替換 prompt
+function showEditProjectModal(projectId){
+    const project = projectData[projectId];
+    document.getElementById('editingProjectId').value = projectId;
+    document.getElementById('editProjectName').value = project.name;
+    document.getElementById('editProjectModal').style.display = 'flex';
+}
+
+function confirmEditProject(){
+    const projectId = document.getElementById('editingProjectId').value;
+    const newName = document.getElementById('editProjectName').value.trim();
+    
+    if(newName){
+        projectData[projectId].name = newName;
+        renderTabs();
+        document.getElementById('editProjectModal').style.display = 'none';
+        saveAll();
+    } else {
+        alert('計畫名稱不能為空');
+    }
+}
+
+function deleteProject(){
+    if(!confirm('確定要刪除此計畫及其下的所有分頁嗎？')) return;
+    
+    const projectId = document.getElementById('editingProjectId').value;
+    const tabsToDelete = projectData[projectId].tabs.map(t => t.id);
+    
+    tabsToDelete.forEach(id => {
+        document.getElementById(id)?.remove();
+    });
+    
+    delete projectData[projectId];
+    
+    renderTabs();
+    document.getElementById('editProjectModal').style.display = 'none';
+
+    document.querySelector('.tab')?.click();
+    
+    saveAll();
+}
+
+function rebindDeleteButtons(){
+  document.querySelectorAll('.delete-super').forEach(b=>b.onclick=function(){
+    if(confirm('確定刪除這整頁？')){
+      const id = this.parentElement.id; 
+      const projectId = this.parentElement.getAttribute('data-project-id'); 
+      
+      document.getElementById(id).remove();
+      
+      if(projectData[projectId]){
+        projectData[projectId].tabs = projectData[projectId].tabs.filter(t => t.id !== id);
+      }
+      
+      renderTabs();
+      
+      document.querySelector('.tab')?.click();
+
+      saveAll();
+    }
+  });
+}
+
 function renameCurrentTab(){
   const tab = document.querySelector('.tab.active');
   if(!tab || tab.classList.contains('add-tab-project') || tab.classList.contains('add-project-btn')) return;
@@ -508,13 +562,6 @@ function renameCurrentTab(){
   }
 }
 
-// [其餘函式保持不變，但請注意： addNewProject 和 renameCurrentTab 仍使用 prompt()，如果也需要在手機上良好運作，需將其改為 Modal。本次主要修正新增分頁]
-
-
-// [刪除原本的 confirmAddNewTab 和 addNewTabInProject，改用新的 Modal 流程]
-
-
-// 儲存、深色模式、匯出功能保持不變
 function saveAll(){ 
   localStorage.setItem('mandalaData', document.getElementById('mandala-content-container').innerHTML);
   localStorage.setItem('projectData', JSON.stringify(projectData)); 
@@ -550,8 +597,6 @@ function exportExcel(){
   });
   XLSX.writeFile(wb,'2025全部分頁曼陀羅_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
-
-// [刪除其餘不再使用的函式]
 
 renderTabs();
 </script>

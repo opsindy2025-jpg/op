@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>2025 超級曼陀羅 - 左側分類版 (可收合)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="viewport" content="width=1480, initial-scale=0.2, minimum-scale=0.1, maximum-scale=5.0, user-scalable=yes">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
@@ -93,41 +93,6 @@
     left: 0; /* 收起時按鈕移到最左邊 */
   }
 
-  /* 調整手機/平板螢幕下的預設行為 */
-  @media (max-width: 1200px) {
-    #sidebar{
-      transform: translateX(-100%); /* 預設隱藏 */
-    }
-    main{
-      margin-left: 0; /* 預設全寬 */
-    }
-    #sidebar-toggle-btn{
-      left: 0; /* 預設顯示在最左邊 */
-      border-radius: 0 8px 8px 0;
-    }
-
-    #sidebar.visible-on-mobile{
-        transform: translateX(0); /* 點擊後展開 */
-        box-shadow: 2px 0 20px rgba(0,0,0,0.4);
-    }
-    main.sidebar-visible-on-mobile{
-        /* 避免內容被按鈕遮擋，可根據需求調整 */
-        margin-left: 0; 
-    }
-    #sidebar-toggle-btn.visible-on-mobile{
-        left: 280px; /* 展開後按鈕移到側邊欄邊緣 */
-        content: '－';
-        border-radius: 8px 0 0 8px;
-    }
-    
-    /* 確保工具列在小螢幕上不會太寬 */
-    .toolbar{
-        width: 90%;
-        box-sizing: border-box;
-    }
-  }
-
-
   .toolbar{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:var(--card);padding:12px 22px;border-radius:50px;box-shadow:0 12px 40px var(--shadow);z-index:999;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
   .btn{padding:12px 24px;background:var(--accent);color:#fff;border:none;border-radius:30px;cursor:pointer;font-size:15px;}
   [contenteditable]:focus{outline:2px solid var(--accent);background:rgba(184,168,159,0.15);}
@@ -135,7 +100,7 @@
 </head>
 <body>
 
-<button id="sidebar-toggle-btn" onclick="toggleSidebar()">＋</button>
+<button id="sidebar-toggle-btn" onclick="toggleSidebar()">－</button>
 
 <div id="sidebar">
   <h2>分類</h2>
@@ -212,45 +177,27 @@ let categories = ['全部', '財務與業務', '健康與生活', '學習成長'
 let currentCategory = '全部';
 let nextId = 2;
 
-// [新增] 檢查是否為行動裝置
-function isMobileView() {
-    return window.matchMedia("(max-width: 1200px)").matches;
-}
+// [移除] 檢查是否為行動裝置的函數，因為現在統一使用桌面布局
 
-// [新增] 側邊欄切換功能
+// [修改] 側邊欄切換功能，移除手機特定邏輯
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.querySelector('main');
     const toggleBtn = document.getElementById('sidebar-toggle-btn');
     
-    // 判斷當前狀態
-    const isHidden = isMobileView() ? 
-        !sidebar.classList.contains('visible-on-mobile') : 
-        sidebar.classList.contains('sidebar-hidden');
+    const isHidden = sidebar.classList.contains('sidebar-hidden');
 
     if (isHidden) {
         // 展開
-        if (isMobileView()) {
-            sidebar.classList.add('visible-on-mobile');
-            mainContent.classList.add('sidebar-visible-on-mobile');
-            toggleBtn.classList.add('visible-on-mobile');
-        } else {
-            sidebar.classList.remove('sidebar-hidden');
-            mainContent.classList.remove('sidebar-hidden');
-            toggleBtn.classList.remove('sidebar-hidden');
-        }
+        sidebar.classList.remove('sidebar-hidden');
+        mainContent.classList.remove('sidebar-hidden');
+        toggleBtn.classList.remove('sidebar-hidden');
         toggleBtn.textContent = '－';
     } else {
         // 收起
-        if (isMobileView()) {
-            sidebar.classList.remove('visible-on-mobile');
-            mainContent.classList.remove('sidebar-visible-on-mobile');
-            toggleBtn.classList.remove('visible-on-mobile');
-        } else {
-            sidebar.classList.add('sidebar-hidden');
-            mainContent.classList.add('sidebar-hidden');
-            toggleBtn.classList.add('sidebar-hidden');
-        }
+        sidebar.classList.add('sidebar-hidden');
+        mainContent.classList.add('sidebar-hidden');
+        toggleBtn.classList.add('sidebar-hidden');
         toggleBtn.textContent = '＋';
     }
 }
@@ -279,12 +226,8 @@ window.onload = () => {
   
   if(localStorage.getItem('darkMode')==='true') document.body.classList.add('dark');
   
-  // [新增] 根據裝置類型，設定初始收起狀態
-  if (isMobileView()) {
-      // 在手機上，讓側邊欄預設收起 (CSS 已經處理)
-      document.getElementById('sidebar-toggle-btn').textContent = '＋';
-  } else if (localStorage.getItem('sidebarState') === 'hidden') {
-      // 在 PC 上，如果上次是收起狀態，則恢復
+  // [修改] 統一使用桌面狀態，載入側邊欄狀態
+  if (localStorage.getItem('sidebarState') === 'hidden') {
       document.getElementById('sidebar').classList.add('sidebar-hidden');
       document.querySelector('main').classList.add('sidebar-hidden');
       document.getElementById('sidebar-toggle-btn').classList.add('sidebar-hidden');
@@ -406,14 +349,9 @@ function saveAll() {
   localStorage.setItem('mandalaCategoriesList', JSON.stringify(categories));
   localStorage.setItem('mandalaCurrentCategory', currentCategory);
   
-  // [新增] 儲存側邊欄狀態
+  // [修改] 儲存側邊欄狀態，統一處理
   const sidebar = document.getElementById('sidebar');
-  if (!isMobileView()) {
-    localStorage.setItem('sidebarState', sidebar.classList.contains('sidebar-hidden') ? 'hidden' : 'visible');
-  } else {
-    // 手機狀態不儲存，每次載入都預設收起
-    localStorage.removeItem('sidebarState');
-  }
+  localStorage.setItem('sidebarState', sidebar.classList.contains('sidebar-hidden') ? 'hidden' : 'visible');
 }
 
 function toggleDark() {

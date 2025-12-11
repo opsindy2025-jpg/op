@@ -1,0 +1,460 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>2025 超級曼陀羅 - 左側分類版 (可收合)</title>
+<meta name="viewport" content="width=1480, initial-scale=0.2, minimum-scale=0.1, maximum-scale=5.0, user-scalable=yes">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<style>
+  :root{--bg:#faf8f5;--card:#fffdf9;--text:#5d5d5d;--accent:#b8a89f;--shadow:rgba(180,160,140,0.18);}
+  body.dark{--bg:#1a1a1a;--card:#252525;--text:#e8e8e8;--accent:#d8c9c0;--shadow:rgba(0,0,0,0.5);}
+  body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC",sans-serif;display:flex;min-height:100vh;}
+  
+  /* ==== 左側分類欄 ==== */
+  #sidebar{
+    width:280px;background:var(--card);border-right:1px solid rgba(0,0,0,0.08);
+    padding:20px 0;position:fixed;left:0;top:0;bottom:0;overflow-y:auto;z-index:100;
+    box-shadow:2px 0 20px var(--shadow);
+    transition: transform 0.3s ease-in-out; /* 新增過渡動畫 */
+  }
+  .dark #sidebar{border-right-color:rgba(255,255,255,0.1);}
+  #sidebar h2{font-size:1.4em;margin:0 20px 20px;color:var(--accent);font-weight:700;}
+  .category{padding:10px 20px;cursor:pointer;transition:all .2s;font-weight:500;display:flex;justify-content:space-between;align-items:center;}
+  .category:hover{background:rgba(184,168,159,0.15);}
+  .category.active{background:var(--accent);color:#fff;}
+  .category .delete-cat{display:none;font-size:0.9em;opacity:0.7;}
+  .category:hover .delete-cat{display:inline;}
+  .category.active .delete-cat{display:none !important;}
+  #add-category{margin:20px 20px 0;padding:12px;background:#4caf50;color:#fff;border-radius:12px;text-align:center;cursor:pointer;font-weight:600;}
+
+  /* ==== 主要內容區 ==== */
+  main{
+    flex:1;
+    margin-left:280px; /* 預設側邊欄寬度 */
+    padding:30px 40px 180px;
+    overflow-y:auto;
+    transition: margin-left 0.3s ease-in-out; /* 新增過渡動畫 */
+  }
+  h1{text-align:center;color:var(--accent);font-size:2.6em;margin:0 0 30px;}
+
+  .add-mandala-btn{display:block;margin:30px auto;padding:16px 40px;background:#2196f3;color:#fff;border:none;border-radius:30px;cursor:pointer;font-size:1.3em;font-weight:600;box-shadow:0 8px 25px var(--shadow);width:360px;}
+
+  /* 曼陀羅內容樣式（保持不變） */
+  .super-mandala{width:1480px;max-width:96vw;margin:60px auto;padding:40px;background:var(--card);border-radius:32px;box-shadow:0 30px 80px var(--shadow);position:relative;display:none;}
+  .super-mandala.visible{display:block;}
+  .delete-super{position:absolute;top:16px;right:16px;width:44px;height:44px;background:#e85d75;color:#fff;border:none;border-radius:50%;font-size:26px;cursor:pointer;z-index:10;}
+  .mandala-title{width:100%;text-align:center;font-size:2.3em;border:none;background:transparent;color:var(--accent);font-weight:700;margin:10px 0;}
+  .mandala-subtitle{width:100%;text-align:center;font-size:1.4em;border:none;background:transparent;color:#a89b92;margin-bottom:20px;}
+  .mandala-title:focus,.mandala-subtitle:focus{outline:2px solid var(--accent);border-radius:8px;}
+  .big-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;}
+  .big-cell{background:linear-gradient(135deg,#f9f5f2,#f0f8ff);border-radius:28px;padding:24px;box-shadow:0 12px 40px var(--shadow);}
+  .dark .big-cell{background:linear-gradient(135deg,#2a2426,#1e2a38);}
+  .big-title{text-align:center;font-size:1.5em;font-weight:700;color:var(--accent);margin-bottom:16px;padding:8px;background:rgba(184,168,159,0.15);border-radius:16px;}
+  .center-big{background:linear-gradient(135deg,#ffe8e1,#e1f0ff)!important;font-size:2.2em!important;color:#8b6f5e;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.4;padding:40px!important;}
+  .dark .center-big{background:linear-gradient(135deg,#3f2f38,#2f3a4a)!important;color:#f0d8c0;}
+  .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;}
+  .mini-cell{background:rgba(255,255,255,0.75);border-radius:12px;padding:12px 10px;font-size:0.92em;line-height:1.5;min-height:68px;box-shadow:0 4px 12px rgba(0,0,0,0.08);transition:all .3s;}
+  .dark .mini-cell{background:rgba(0,0,0,0.4);}
+  .mini-cell:hover{transform:translateY(-4px);}
+  .mini-center{background:linear-gradient(135deg,#ffe0d8,#d8e8ff)!important;font-weight:700;font-size:1.1em!important;}
+  .dark .mini-center{background:linear-gradient(135deg,#4a2f3a,#2f3a4a)!important;color:#f0d8c0;}
+  
+  /* ==== 側邊欄收起狀態 ==== */
+  #sidebar.sidebar-hidden{
+    transform: translateX(-100%); /* 完全隱藏 */
+    box-shadow: none;
+  }
+  main.sidebar-hidden{
+    margin-left: 0; /* 主內容佔滿全寬 */
+  }
+
+  /* ==== 側邊欄切換按鈕 ==== */
+  #sidebar-toggle-btn{
+    position: fixed;
+    left: 280px; /* 預設在側邊欄邊緣 */
+    top: 20px;
+    width: 40px;
+    height: 40px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 40px;
+    text-align: center;
+    box-shadow: 2px 0 10px var(--shadow);
+    z-index: 101;
+    transition: left 0.3s ease-in-out;
+  }
+  #sidebar-toggle-btn.sidebar-hidden{
+    left: 0; /* 收起時按鈕移到最左邊 */
+  }
+
+  .toolbar{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:var(--card);padding:12px 22px;border-radius:50px;box-shadow:0 12px 40px var(--shadow);z-index:999;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
+  .btn{padding:12px 24px;background:var(--accent);color:#fff;border:none;border-radius:30px;cursor:pointer;font-size:15px;}
+  [contenteditable]:focus{outline:2px solid var(--accent);background:rgba(184,168,159,0.15);}
+</style>
+</head>
+<body>
+
+<button id="sidebar-toggle-btn" onclick="toggleSidebar()">－</button>
+
+<div id="sidebar">
+  <h2>分類</h2>
+  <div id="category-list">
+    </div>
+  <div id="add-category">＋ 新增分類</div>
+</div>
+
+<main>
+  <h1>2025 超級曼陀羅 - 分類宇宙計畫</h1>
+  <div class="add-mandala-btn" onclick="addNewMandala()">＋ 新增曼陀羅表格</div>
+
+  <div id="mandala-container">
+    <div class="super-mandala visible" data-category="財務與業務" data-id="m1">
+      <button class="delete-super">×</button>
+      <input type="text" class="mandala-title" value="2025 模板被動收入 500 萬 - 宇宙版">
+      <input type="text" class="mandala-subtitle" value="躺著也能財富自由（81 格全開！）">
+      <div class="big-grid">
+        <div class="big-cell"><div class="big-title" contenteditable>里程碑與生活平衡</div><div class="mini-grid">
+          <div class="mini-cell" contenteditable>Q1 20萬</div><div class="mini-cell" contenteditable>Q2 50萬</div><div class="mini-cell" contenteditable>Q3 80萬</div>
+          <div class="mini-cell" contenteditable>Q4 100萬+</div><div class="mini-cell mini-center" contenteditable>每天只工作 4-5 小時</div>
+          <div class="mini-cell" contenteditable>每週 3 天完全離線</div><div class="mini-cell" contenteditable>每季出國一個月</div><div class="mini-cell" contenteditable>2025/12/31 慶功</div><div class="mini-cell" contenteditable>備用</div>
+        </div></div>
+        <div class="big-cell"><div class="big-title" contenteditable>產品線規劃</div><div class="mini-grid">
+          <div class="mini-cell" contenteditable>Next.js 企業官網</div><div class="mini-cell" contenteditable>Framer 高轉換 LP</div><div class="mini-cell" contenteditable>SaaS 完整網站</div>
+          <div class="mini-cell" contenteditable>電商模板</div><div class="mini-cell mini-center" contenteditable>每月推 2 個付費模板</div>
+          <div class="mini-cell" contenteditable>Notion 系統</div><div class="mini-cell" contenteditable>3D 沉浸式作品集</div><div class="mini-cell" contenteditable>Shadcn 套件</div><div class="mini-cell" contenteditable>Webflow 模板</div>
+        </div></div>
+        <div class="big-cell"><div class="big-title" contenteditable>銷售平台與通路</div><div class="mini-grid">
+          <div class="mini-cell" contenteditable>Gumroad 主戰場</div><div class="mini-cell" contenteditable>Lemon Squeezy</div><div class="mini-cell" contenteditable>自架網站</div>
+          <div class="mini-cell" contenteditable>Envato</div><div class="mini-cell mini-center" contenteditable>聯盟行銷 30-50%</div>
+          <div class="mini-cell" contenteditable>小紅書數位店</div><div class="mini-cell" contenteditable>微信視頻號</div><div class="mini-cell" contenteditable>X 直達車</div><div class="mini-cell" contenteditable>備用平台</div>
+        </div></div>
+        <div class="big-cell"><div class="big-title" contenteditable>自動化與團隊</div><div class="mini-grid">
+          <div class="mini-cell" contenteditable>ChatGPT 客服</div><div class="mini-cell" contenteditable>影片剪輯外包</div><div class="mini-cell" contenteditable>設計外包</div>
+          <div class="mini-cell" contenteditable>自動報表</div><div class="mini-cell mini-center" contenteditable>年底招全職助手</div>
+          <div class="mini-cell" contenteditable>SOP 完整化</div><div class="mini-cell" contenteditable>稅務自動化</div><div class="mini-cell" contenteditable>聯盟追蹤</div><div class="mini-cell" contenteditable>備用</div>
+        </div></div>
+        <div class="big-cell center-big"><div contenteditable>2025 年<br>純模板被動收入<br>500 萬</div></div>
+        <div class="big-cell"><div class="big-title" contenteditable>價格與收入結構</div><div class="mini-grid">
+          <div class="mini-cell" contenteditable>高階 $199-$499</div><div class="mini-cell" contenteditable>中階 $79-$149</div><div class="mini-cell" contenteditable>Notion $29-$79</div>
+          <div class="mini-cell" contenteditable>訂閱 $39/月</div><div class="mini-cell mini-center" contenteditable>終身會員 $999</div>
+          <div class="mini-cell" contenteditable>企業授權 $1999+</div><div class="mini-cell" contenteditable>Bundle $299-$599</div><div class="mini-cell" contenteditable>聯盟分潤 80-100萬</div><div class="mini-cell" contenteditable>備用</div>
+        </div></div>
+        <div class="big-cell"><div class="big-title" contenteditable>內容行銷引擎</div><div class="mini-grid">
+          <div class="mini-cell" contenteditable>每週 1 支 YouTube</div><div class="mini-cell" contenteditable>每天 2-3 X 貼文</div><div class="mini-cell" contenteditable>每月免費模板換 Email</div>
+          <div class="mini-cell" contenteditable>小紅書 15 篇爆款</div><div class="mini-cell mini-center" contenteditable>建 5 萬人名單</div>
+          <div class="mini-cell" contenteditable>50 篇 SEO 文</div><div class="mini-cell" contenteditable>每月直播教學</div><div class="mini-cell" contenteditable>30 個 Podcast</div><div class="mini-cell" contenteditable>備用</div>
+        </div></div>
+        <div class="big-cell"><div class="big-title" contenteditable>產品開發流程</div><div class="mini-grid">
+          <div class="mini-cell" contenteditable>V0 + Cursor + Claude</div><div class="mini-cell" contenteditable>每支 ≤7 天完成</div><div class="mini-cell" contenteditable>自建 Component Library</div>
+          <div class="mini-cell" contenteditable>3 種風格變體</div><div class="mini-cell mini-center" contenteditable>附 30-60 分鐘教學影片</div>
+          <div class="mini-cell" contenteditable>Figma + Notion 手冊</div><div class="mini-cell" contenteditable>90 天退款</div><div class="mini-cell" contenteditable>終身更新</div><div class="mini-cell" contenteditable>備用</div>
+        </div></div>
+        <div class="big-cell"><div class="big-title" contenteditable>未來擴展</div><div class="mini-grid">
+          <div class="mini-cell" contenteditable>開設模板學校</div><div class="mini-cell" contenteditable>推出英文版</div><div class="mini-cell" contenteditable>Gumroad Top 100</div>
+          <div class="mini-cell" contenteditable>進軍企業市場</div><div class="mini-cell mini-center" contenteditable>更多瘋狂想法…</div>
+          <div class="mini-cell" contenteditable></div><div class="mini-cell" contenteditable></div><div class="mini-cell" contenteditable></div><div class="mini-cell" contenteditable></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toolbar">
+  <button class="btn" onclick="toggleDark()">深色模式</button>
+  <button class="btn" onclick="saveAll()">儲存</button>
+  <button class="btn" onclick="exportPNG()">匯出 PNG</button>
+  <button class="btn" onclick="exportExcel()">匯出 Excel</button>
+</div>
+
+<script>
+let categories = ['全部', '財務與業務', '健康與生活', '學習成長', '人際關係'];
+let currentCategory = '全部';
+let nextId = 2;
+
+// [移除] 檢查是否為行動裝置的函數，因為現在統一使用桌面布局
+
+// [修改] 側邊欄切換功能，移除手機特定邏輯
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.querySelector('main');
+    const toggleBtn = document.getElementById('sidebar-toggle-btn');
+    
+    const isHidden = sidebar.classList.contains('sidebar-hidden');
+
+    if (isHidden) {
+        // 展開
+        sidebar.classList.remove('sidebar-hidden');
+        mainContent.classList.remove('sidebar-hidden');
+        toggleBtn.classList.remove('sidebar-hidden');
+        toggleBtn.textContent = '－';
+    } else {
+        // 收起
+        sidebar.classList.add('sidebar-hidden');
+        mainContent.classList.add('sidebar-hidden');
+        toggleBtn.classList.add('sidebar-hidden');
+        toggleBtn.textContent = '＋';
+    }
+}
+
+// 載入資料
+window.onload = () => {
+  const saved = localStorage.getItem('mandalaCategoriesData');
+  const savedCat = localStorage.getItem('mandalaCategoriesList');
+  const savedCurrent = localStorage.getItem('mandalaCurrentCategory');
+
+  if (saved && savedCat && confirm('偵測到上次儲存，是否載入？')) {
+    document.getElementById('mandala-container').innerHTML = saved;
+    categories = JSON.parse(savedCat);
+    currentCategory = savedCurrent || '全部';
+    
+    // 重新計算 nextId
+    const maxId = Array.from(document.querySelectorAll('.super-mandala')).reduce((max, el) => {
+        const id = parseInt(el.getAttribute('data-id')?.replace('m', '')) || 0; // 增加?.和預設值
+        return id > max ? id : max;
+    }, 1);
+    nextId = maxId + 1;
+    
+  } else {
+    localStorage.clear();
+  }
+  
+  if(localStorage.getItem('darkMode')==='true') document.body.classList.add('dark');
+  
+  // [修改] 統一使用桌面狀態，載入側邊欄狀態
+  if (localStorage.getItem('sidebarState') === 'hidden') {
+      document.getElementById('sidebar').classList.add('sidebar-hidden');
+      document.querySelector('main').classList.add('sidebar-hidden');
+      document.getElementById('sidebar-toggle-btn').classList.add('sidebar-hidden');
+      document.getElementById('sidebar-toggle-btn').textContent = '＋';
+  } else {
+      document.getElementById('sidebar-toggle-btn').textContent = '－';
+  }
+
+  renderCategories();
+  filterMandala();
+  bindDeleteButtons();
+  setupDragAndDrop();
+};
+
+function renderCategories() {
+  const list = document.getElementById('category-list');
+  list.innerHTML = '';
+  categories.forEach(cat => {
+    const div = document.createElement('div');
+    div.className = 'category';
+    if (cat === currentCategory) div.classList.add('active');
+    div.innerHTML = `
+      <span onclick="switchCategory('${cat}')">${cat === '全部' ? '全部' : cat}</span>
+      ${cat !== '全部' ? `<span class="delete-cat" onclick="event.stopPropagation(); deleteCategory('${cat}')">×</span>` : ''}
+    `;
+    list.appendChild(div);
+  });
+}
+
+function switchCategory(cat) {
+  currentCategory = cat;
+  renderCategories();
+  filterMandala();
+  saveAll();
+}
+
+function filterMandala() {
+  document.querySelectorAll('.super-mandala').forEach(m => {
+    const cat = m.getAttribute('data-category');
+    if (currentCategory === '全部' || cat === currentCategory) {
+      m.classList.add('visible');
+    } else {
+      m.classList.remove('visible');
+    }
+  });
+}
+
+document.getElementById('add-category').onclick = () => {
+  const name = prompt('新增分類名稱：', '新分類');
+  if (name && !categories.includes(name)) {
+    categories.push(name);
+    renderCategories();
+    saveAll();
+  }
+};
+
+function deleteCategory(name) {
+  if (confirm(`確定刪除分類「${name}」？\n裡面的曼陀羅會移到「全部」`)) {
+    categories = categories.filter(c => c !== name);
+    document.querySelectorAll(`.super-mandala[data-category="${name}"]`).forEach(m => {
+      m.setAttribute('data-category', '全部');
+    });
+    // 如果刪除的是當前分類，則切換到「全部」
+    if (currentCategory === name) {
+        currentCategory = '全部';
+    }
+    renderCategories();
+    filterMandala();
+    saveAll();
+  }
+}
+
+function addNewMandala() {
+  const container = document.getElementById('mandala-container');
+  const div = document.createElement('div');
+  div.className = 'super-mandala visible';
+  div.setAttribute('data-id', 'm' + nextId++);
+  div.setAttribute('data-category', currentCategory === '全部' ? '財務與業務' : currentCategory);
+  
+  // 為了節省篇幅，這裡使用完整的範例 HTML 結構
+  div.innerHTML = `
+    <button class="delete-super">×</button>
+    <input type="text" class="mandala-title" value="新曼陀羅 - ${new Date().toLocaleDateString('zh-TW')}">
+    <input type="text" class="mandala-subtitle" value="點這裡修改副標題">
+    <div class="big-grid">
+      ${Array.from({length:9},(_,i)=>i===4?
+        `<div class="big-cell center-big"><div contenteditable>2025<br>核心目標</div></div>`:
+        `<div class="big-cell"><div class="big-title" contenteditable>大項目標題</div><div class="mini-grid">${Array(9).fill().map((_,j)=>`<div class="mini-cell${j===4?' mini-center':''}" contenteditable></div>`).join('')}</div></div>`
+      ).join('')}
+    </div>`;
+  container.appendChild(div);
+  bindDeleteButtons();
+  setupDragAndDrop();
+  div.scrollIntoView({behavior:'smooth'});
+  saveAll();
+}
+
+function bindDeleteButtons() {
+  document.querySelectorAll('.delete-super').forEach(b => {
+    b.onclick = function() {
+      if (confirm('確定刪除這個曼陀羅表格？')) {
+        this.parentElement.remove();
+        saveAll();
+      }
+    };
+  });
+}
+
+function setupDragAndDrop() {
+  new Sortable(document.getElementById('mandala-container'), {
+    animation: 150,
+    filter: ':not(.visible)', /* 確保只對顯示中的頁面進行拖曳 */
+    onEnd: saveAll
+  });
+}
+
+function saveAll() {
+  localStorage.setItem('mandalaCategoriesData', document.getElementById('mandala-container').innerHTML);
+  localStorage.setItem('mandalaCategoriesList', JSON.stringify(categories));
+  localStorage.setItem('mandalaCurrentCategory', currentCategory);
+  
+  // [修改] 儲存側邊欄狀態，統一處理
+  const sidebar = document.getElementById('sidebar');
+  localStorage.setItem('sidebarState', sidebar.classList.contains('sidebar-hidden') ? 'hidden' : 'visible');
+}
+
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+}
+
+async function exportPNG() {
+  for(let page of document.querySelectorAll('.super-mandala.visible')){
+    // 臨時隱藏刪除按鈕
+    const deleteBtn = page.querySelector('.delete-super');
+    if (deleteBtn) deleteBtn.style.display = 'none';
+
+    const title = page.querySelector('.mandala-title')?.value || '曼陀羅';
+    const c = await html2canvas(page,{scale:1.8});
+    const a = document.createElement('a');
+    a.download = title + '.png';
+    a.href = c.toDataURL(); a.click();
+    
+    // 恢復刪除按鈕
+    if (deleteBtn) deleteBtn.style.display = 'block';
+
+    await new Promise(r=>setTimeout(r,400));
+  }
+}
+
+/**
+ * 【修復】匯出 Excel 函數
+ * 確保從可編輯欄位中正確提取內容，並只匯出當前可見的頁面。
+ */
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+  
+  // 只選取當前可見的曼陀羅頁面
+  document.querySelectorAll('.super-mandala.visible').forEach((p, i) => {
+    // 提取標題，並將其作為 Excel 工作表的名稱 (最多 31 字)
+    const titleEl = p.querySelector('.mandala-title');
+    const subtitleEl = p.querySelector('.mandala-subtitle');
+    const sheetTitle = (titleEl?.value || `頁面${i+1}`).slice(0, 31);
+    
+    // 準備數據：第一行為主標題，第二行為副標題，空行分隔
+    let data = [
+      [titleEl?.value || `頁面${i+1}`],
+      [subtitleEl?.value || ''],
+      [] // 空行分隔
+    ];
+    
+    // 遍歷所有 9 個大區塊 (Big Cells)
+    p.querySelectorAll('.big-cell').forEach(b => {
+      // 提取大標題 (Big Title)，處理可能是 input 或 contenteditable 的情況
+      let bigTitle = '';
+      const titleElement = b.querySelector('.big-title') || b.querySelector('.center-big > div[contenteditable]');
+      if (titleElement) {
+        bigTitle = titleElement.innerText.trim();
+      }
+      
+      // 將大標題作為新的一行
+      if (bigTitle) {
+        data.push([bigTitle]);
+      } else if (b.classList.contains('center-big')) {
+        // 核心目標單獨處理
+        data.push(['核心目標']);
+      }
+      
+      // 遍歷 9 個小格子 (Mini Cells)
+      const miniCells = b.querySelectorAll('.mini-cell, .center-big > div[contenteditable]');
+      
+      // 確保從第一列開始
+      let currentRow = []; 
+      
+      miniCells.forEach((m, j) => {
+        // 提取內容
+        const cellContent = m.innerText.trim() || '';
+        
+        // 每 3 個小格子換一行
+        if (j > 0 && j % 3 === 0) {
+          data.push(currentRow);
+          currentRow = []; // 開始新的一行
+        }
+        currentRow.push(cellContent);
+      });
+      
+      // 處理最後不滿 3 個的 currentRow
+      if (currentRow.length > 0) {
+        data.push(currentRow);
+      }
+      
+      data.push([]); // 大區塊間以空行分隔
+    });
+    
+    // 創建工作表
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    
+    // 設定欄寬
+    ws['!cols'] = Array(3).fill({ wch: 30 });
+    
+    // 加入工作簿
+    XLSX.utils.book_append_sheet(wb, ws, sheetTitle);
+  });
+  
+  // 寫入檔案
+  XLSX.writeFile(wb, '曼陀羅分類匯出_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+}
+</script>
+</body>
+</html>
